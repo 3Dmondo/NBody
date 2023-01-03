@@ -51,9 +51,11 @@ namespace NBody
       _shader.Use();
       GL.BindVertexArray(_vertexArrayObject);
       var model = Matrix4.Identity;
-      _shader.SetMatrix4("model", model);
-      _shader.SetMatrix4("view", _camera.GetViewMatrix());
-      _shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+      //_shader.SetMatrix4("model", model);
+      //_shader.SetMatrix4("view", _camera.GetViewMatrix());
+      //_shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
+      _shader.SetMatrix4("model_view_projection", model * _camera.GetViewMatrix() * _camera.GetProjectionMatrix());
+      _shader.SetVector3("camera_pos", _camera.Position);
       GL.DrawArrays(PrimitiveType.Points, 0, 3);
       GL.Disable(EnableCap.PointSprite);
       GL.Disable(EnableCap.VertexProgramPointSize);
@@ -69,6 +71,15 @@ namespace NBody
       if (input.IsKeyDown(Keys.Escape)) {
         Close();
       }
+    }
+
+    // In the mouse wheel function, we manage all the zooming of the camera.
+    // This is simply done by changing the FOV of the camera.
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+      base.OnMouseWheel(e);
+      _camera.Position *= 1.0f + 0.1f * e.OffsetY;
+      //_camera.Fov -= e.OffsetY;
     }
 
     protected override void OnResize(ResizeEventArgs e)
