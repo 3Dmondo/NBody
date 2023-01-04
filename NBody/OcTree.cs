@@ -17,7 +17,7 @@ namespace NBody
     /// The softening factor for the acceleration equation. This dampens the 
     /// the slingshot effect during close encounters of bodies. 
     /// </summary>
-    private const double Epsilon = 700;
+    private const double Epsilon = 0.2; //700;
 
     /// <summary>
     /// The minimum width of a tree. Subtrees are not created when if their width 
@@ -52,7 +52,7 @@ namespace NBody
     /// <summary>
     /// The location of the center of mass of the bodies contained in the tree. 
     /// </summary>
-    private Vector CenterOfMass;
+    public Vector CenterOfMass { get; private set; }
 
     private Body FirstBody { get; set; }
 
@@ -65,7 +65,8 @@ namespace NBody
     {
       BodyCount = 0;
       Mass = 0;
-      CenterOfMass = Location = location;
+      CenterOfMass = Vector.Zero;
+      Location = location;
       Width = width;
       HalfWidth = Width / 2.0;
       QuarterWidth = HalfWidth / 2.0;
@@ -98,8 +99,8 @@ namespace NBody
       double subtreeWidth = HalfWidth;
 
       // Don't create subtrees if it violates the width limit.
-      if (subtreeWidth < MinimumWidth)
-        return;
+      //if (subtreeWidth < MinimumWidth)
+      //  return;
 
       int ii = 1, jj = 2, kk = 4;
       double i = 1.0, j = 1.0, k = 1.0;
@@ -136,7 +137,7 @@ namespace NBody
           (WidthSquare < ToleranceSquare * dSquare)) {
         var distance = System.Math.Sqrt(dSquare + Epsilon * Epsilon);
         var acc = Constants.G * Mass / (distance * distance * distance);
-        body.Acceleration = d * acc;
+        body.Acceleration += d * acc;
       } else {
         for (int i = 0; i < 8; i++)
           if (null != subTrees[i]) {

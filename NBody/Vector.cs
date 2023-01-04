@@ -2,16 +2,16 @@ using System.Numerics;
 
 namespace NBody
 {
-  public struct Vector :
-          IAdditionOperators<Vector, Vector, Vector>,
-          IAdditiveIdentity<Vector, Vector>,
-          IDivisionOperators<Vector, double, Vector>,
-          IEquatable<Vector>,
-          IEqualityOperators<Vector, Vector, bool>,
-          IMultiplyOperators<Vector, Vector, double>,
-          IMultiplyOperators<Vector, double, Vector>,
-          ISubtractionOperators<Vector, Vector, Vector>,
-          IUnaryNegationOperators<Vector, Vector>
+  public struct Vector //:
+  //        IAdditionOperators<Vector, Vector, Vector>,
+  //        IAdditiveIdentity<Vector, Vector>,
+  //        IDivisionOperators<Vector, double, Vector>,
+  //        IEquatable<Vector>,
+  //        IEqualityOperators<Vector, Vector, bool>,
+  //        IMultiplyOperators<Vector, Vector, double>,
+  //        IMultiplyOperators<Vector, double, Vector>,
+  //        ISubtractionOperators<Vector, Vector, Vector>,
+  //        IUnaryNegationOperators<Vector, Vector>
   {
     public Vector(double x, double y, double z)
     {
@@ -101,6 +101,16 @@ namespace NBody
         Y = left.Z * right.X - left.X * right.Z,
         Z = left.X * right.Y - left.Y * right.X,
       };
+    }
+
+    public double Magnitude()
+    {
+      return Math.Sqrt(X * X + Y * Y + Z * Z);
+    }
+
+    public Vector Unit()
+    {
+      return this / Magnitude();
     }
 
     public override bool Equals(object? obj)

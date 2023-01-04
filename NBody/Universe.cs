@@ -2,7 +2,7 @@ namespace NBody
 {
   internal class Universe
   {
-    private Body[] Bodies;
+    public Body[] Bodies { get; private set; }
 
     public Universe(Body[] bodies)
     {
@@ -11,21 +11,32 @@ namespace NBody
 
     private OcTreeCache OcTreeCache = new OcTreeCache();
 
-    public void Simulate()
+    public Vector Simulate()
     {
-      foreach (var body in Bodies) {
-        body.Update();
-      }
+      OcTree tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK1());
+      tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK2());
+      tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK3());
+      tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK4());
+      Parallel.ForEach(Bodies, b => b.Update());
 
-      var halfWidth = Bodies.
-        Select(
-          b => Math.Max(
-            Math.Max(
-              Math.Abs(b.Location.X), 
-              Math.Abs(b.Location.Y)),
-            Math.Abs(b.Location.Z))).
-        Max();
 
+      return tree.CenterOfMass;
+    }
+
+    private OcTree AccelerateBodies()
+    {
+      double halfWidth = GetHalfWidth();
+      OcTree tree = BuildOcTree(halfWidth);
+      Parallel.ForEach(Bodies, tree.Accelerate);
+      return tree;
+    }
+
+    private OcTree BuildOcTree(double halfWidth)
+    {
       OcTreeCache.Current = 0;
       var tree = OcTreeCache.GetNextOcTree(Vector.Zero, 2.1 * halfWidth);
 
@@ -33,9 +44,19 @@ namespace NBody
         tree.Add(body);
       }
 
-      foreach (var body in Bodies) {
-        tree.Accelerate(body);
-      }
+      return tree;
+    }
+
+    private double GetHalfWidth()
+    {
+      return Bodies.
+        Select(
+          b => Math.Max(
+            Math.Max(
+              Math.Abs(b.Location.X),
+              Math.Abs(b.Location.Y)),
+            Math.Abs(b.Location.Z))).
+        Max();
     }
   }
 }

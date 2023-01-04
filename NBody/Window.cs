@@ -6,22 +6,24 @@ using OpenTK.Windowing.GraphicsLibraryFramework;
 
 namespace NBody
 {
-  public class Window : GameWindow
+  internal class Window : GameWindow
   {
-    private readonly float[] _vertices =
-    {
-      -0.05f, -0.5f, 0.0f,
-       0.0f,   0.0f, 0.0f,
-       0.05f,  0.5f, 0.0f
-    };
+    private readonly float[] _vertices;
     private int _vertexBufferObject;
     private int _vertexArrayObject;
     private Shader _shader;
     private Camera _camera;
 
-    public Window(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
+    private Universe Universe;
+
+    internal Window(
+      GameWindowSettings gameWindowSettings,
+      NativeWindowSettings nativeWindowSettings,
+      Universe universe)
             : base(gameWindowSettings, nativeWindowSettings)
     {
+      _vertices = new float[universe.Bodies.Length * 3];
+      Universe = universe;
     }
 
     protected override void OnLoad()
@@ -29,15 +31,14 @@ namespace NBody
       base.OnLoad();
       GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
       _vertexBufferObject = GL.GenBuffer();
-      GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-      GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StaticDraw);
+      UpdateVertices();
       _vertexArrayObject = GL.GenVertexArray();
       GL.BindVertexArray(_vertexArrayObject);
       GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
       GL.EnableVertexAttribArray(0);
       _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
       _shader.Use();
-      _camera = new Camera(Vector3.UnitZ * 3, Size.X / (float)Size.Y);
+      _camera = new Camera((Vector3.UnitZ * 10.0f) + (Vector3.UnitY * 10.0f), Size.X / (float)Size.Y);
     }
 
     // Now that initialization is done, let's create our render loop.
@@ -51,12 +52,13 @@ namespace NBody
       _shader.Use();
       GL.BindVertexArray(_vertexArrayObject);
       var model = Matrix4.Identity;
-      //_shader.SetMatrix4("model", model);
-      //_shader.SetMatrix4("view", _camera.GetViewMatrix());
-      //_shader.SetMatrix4("projection", _camera.GetProjectionMatrix());
-      _shader.SetMatrix4("model_view_projection", model * _camera.GetViewMatrix() * _camera.GetProjectionMatrix());
+      _shader.SetMatrix4(
+        "model_view_projection",
+        model *
+        _camera.GetViewMatrix() *
+        _camera.GetProjectionMatrix());
       _shader.SetVector3("camera_pos", _camera.Position);
-      GL.DrawArrays(PrimitiveType.Points, 0, 3);
+      GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 3);
       GL.Disable(EnableCap.PointSprite);
       GL.Disable(EnableCap.VertexProgramPointSize);
       SwapBuffers();
@@ -71,6 +73,22 @@ namespace NBody
       if (input.IsKeyDown(Keys.Escape)) {
         Close();
       }
+
+      var centerOfMass = Universe.Simulate();
+      UpdateVertices();
+    }
+
+    private void UpdateVertices()
+    {
+      var j = 0;
+      for (int i = 0; i < Universe.Bodies.Length; i++) {
+        var bodyLocation = Universe.Bodies[i].Location;
+        _vertices[j++] = (float)bodyLocation.X;
+        _vertices[j++] = (float)bodyLocation.Y;
+        _vertices[j++] = (float)bodyLocation.Z;
+      }
+      GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
+      GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StreamDraw);
     }
 
     // In the mouse wheel function, we manage all the zooming of the camera.
@@ -85,6 +103,7 @@ namespace NBody
     protected override void OnResize(ResizeEventArgs e)
     {
       base.OnResize(e);
+      _camera.AspectRatio = Size.X / (float)Size.Y;
       GL.Viewport(0, 0, Size.X, Size.Y);
     }
 
