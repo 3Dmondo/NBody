@@ -46,6 +46,7 @@ namespace NBody
       K1L = Velocity;
       Velocity = PrevVelocity + Acceleration * 0.5;
       Location = PrevLocation + Velocity * 0.5;
+      Acceleration = Vector.Zero;
     }
 
     public void ComputeK2()
@@ -54,6 +55,7 @@ namespace NBody
       K2L = Velocity;
       Velocity = PrevVelocity + Acceleration * 0.5;
       Location = PrevLocation + Velocity * 0.5;
+      Acceleration = Vector.Zero;
     }
 
     public void ComputeK3()
@@ -62,6 +64,7 @@ namespace NBody
       K3L = Velocity;
       Velocity = PrevVelocity + Acceleration * 0.5;
       Location = PrevLocation + Velocity * 0.5;
+      Acceleration = Vector.Zero;
     }
 
     public void ComputeK4()
@@ -70,12 +73,14 @@ namespace NBody
       K4L = Velocity;
       Velocity = PrevVelocity + Acceleration;
       Location = PrevLocation + Velocity;
+      Acceleration = Vector.Zero;
     }
 
     public void Update()
     {
       Velocity = PrevVelocity + 1 / 6.0 * (K1V + 2.0 * K2V + 2.0 * K3V + K4V);
-      Location = PrevLocation + 1 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L); 
+      Location = PrevLocation + 1 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L);
+      Acceleration = Vector.Zero;
     }
 
   }
