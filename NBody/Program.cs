@@ -11,14 +11,14 @@ var nativeWindowSettings = new NativeWindowSettings() {
 
 var random = new Random();
 
-var bodies = new Body[5000];
-bodies[0] = new Body { Mass = 0.000000001 };
+var bodies = new Body[10000];
+bodies[0] = new Body { Mass = 0.000000000001 };
 for (int i = 1; i < bodies.Length; i++) {
   bodies[i] = new Body {
-    Location = RandomInSpere(5),
-    Mass = 0.00000000001, // random.NextDouble() * 2.0
+    Location = RandomInSpere(10),
+    Mass = 0.0000000000001, // random.NextDouble() * 2.0
   };
-  bodies[i].Velocity = 0.0025 * Vector.Cross(bodies[i].Location, new Vector(0, 1, 0)).Unit() * Math.Pow(bodies[i].Location * bodies[i].Location, 0.5);
+  bodies[i].Velocity = 0.001 * Vector.Cross(bodies[i].Location, new Vector(0, 1, 0)).Unit() * Math.Pow(bodies[i].Location * bodies[i].Location, 0.5);
 }
 
 var universe = new Universe(bodies);
@@ -38,7 +38,7 @@ Vector RandomInSpere(double radius)
   var cosTheta = 2.0 * random.NextDouble() - 1.0;
   return new Vector(
     r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Cos(phi),
-    0.01 * r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Sin(phi),
+    0.1 * r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Sin(phi),
     r * cosTheta
   );
 }

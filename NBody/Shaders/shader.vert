@@ -7,7 +7,7 @@ uniform vec3 camera_pos;
 
 const float minPointScale = 1.0;
 const float maxPointScale = 100.0;
-const float maxDistance   = 1.0;
+const float maxDistance   = 10.0;
 
 void main(void)
 {

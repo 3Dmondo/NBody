@@ -11,7 +11,7 @@ namespace NBody
   // Check out the web version if you don't know why we are doing a specific thing or want to know more about the code.
   public class Camera
   {
-    private Vector3 _up = Vector3.UnitY;
+    public Vector3 Up { get; set; }  = Vector3.UnitY;
 
     // The field of view of the camera (radians)
     private float _fov = MathHelper.PiOver2 / 2.0f;
@@ -33,7 +33,7 @@ namespace NBody
     // Get the view matrix using the amazing LookAt function described more in depth on the web tutorials
     public Matrix4 GetViewMatrix()
     {
-      return Matrix4.LookAt(Position, Target, _up);
+      return Matrix4.LookAt(Position, Target, Up);
     }
 
     // Get the projection matrix using the same method we have used up until this point

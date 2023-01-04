@@ -15,6 +15,7 @@ namespace NBody
     private Camera _camera;
 
     private Universe Universe;
+    private bool Button1Pressed;
 
     internal Window(
       GameWindowSettings gameWindowSettings,
@@ -38,7 +39,7 @@ namespace NBody
       GL.EnableVertexAttribArray(0);
       _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
       _shader.Use();
-      _camera = new Camera((Vector3.UnitZ * 10.0f) + (Vector3.UnitY * 10.0f), Size.X / (float)Size.Y);
+      _camera = new Camera(Vector3.UnitZ * 10.0f, Size.X / (float)Size.Y);
     }
 
     // Now that initialization is done, let's create our render loop.
@@ -97,7 +98,39 @@ namespace NBody
     {
       base.OnMouseWheel(e);
       _camera.Position *= 1.0f + 0.1f * e.OffsetY;
-      //_camera.Fov -= e.OffsetY;
+    }
+
+    protected override void OnMouseMove(MouseMoveEventArgs e)
+    {
+      base.OnMouseMove(e);
+      if (Button1Pressed) {
+        var sideRotation = Matrix4.CreateFromAxisAngle(_camera.Up, -e.DeltaX * 0.001f);
+        var pitchRotation = Matrix4.CreateFromAxisAngle(Vector3.Cross(_camera.Position, _camera.Up), e.DeltaY * 0.001f);
+        var transform = sideRotation * pitchRotation;
+
+        var newPosition = new Vector4(_camera.Position, 1.0f) * transform;
+        var newUp = new Vector4(_camera.Up, 1.0f) * transform;
+
+
+        _camera.Position = newPosition.Xyz;
+        _camera.Up = newUp.Xyz;
+      }
+    }
+
+    protected override void OnMouseDown(MouseButtonEventArgs e)
+    {
+      base.OnMouseDown(e);
+      if (e.Button == MouseButton.Button1) {
+        Button1Pressed = e.IsPressed;
+      }
+    }
+
+    protected override void OnMouseUp(MouseButtonEventArgs e)
+    {
+      base.OnMouseUp(e);
+      if (e.Button == MouseButton.Button1) {
+        Button1Pressed = e.IsPressed;
+      }
     }
 
     protected override void OnResize(ResizeEventArgs e)
