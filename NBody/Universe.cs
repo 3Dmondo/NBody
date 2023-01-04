@@ -7,6 +7,27 @@ namespace NBody
     public Universe(Body[] bodies)
     {
       Bodies = bodies;
+      InitVelocities();
+    }
+
+    private void InitVelocities()
+    {
+      var random = new Random();
+      var tree = BuildOcTree(GetHalfWidth());
+      Parallel.ForEach(Bodies, b => SetBodyVelocity(b, random, tree));
+    }
+
+    private static void SetBodyVelocity(Body b, Random random, OcTree tree)
+    {
+      if (b.Location == Vector.Zero) return;
+      var mu = tree.Mass * Constants.G;
+      var d = tree.CenterOfMass - b.Location;
+      var distance = Math.Sqrt(d * d);
+      var dir = Vector.Cross(b.Location, new Vector(0, 1, 0));
+      dir /= dir.Magnitude();
+      b.Velocity = dir * Math.Pow(distance, 0.9) * 0.002;
+      var Vy = (random.NextDouble() - 0.5) * b.Velocity.Magnitude() * 0.05f;
+      b.Velocity += new Vector(0, Vy, 0);
     }
 
     private OcTreeCache OcTreeCache = new OcTreeCache();
@@ -22,7 +43,6 @@ namespace NBody
       tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK4());
       Parallel.ForEach(Bodies, b => b.Update());
-
 
       return tree.CenterOfMass;
     }
