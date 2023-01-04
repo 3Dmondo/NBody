@@ -60,13 +60,13 @@ namespace NBody
     public Vector Simulate()
     {
       OcTree tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK1());
-      tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK2());
-      tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK3());
-      tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK4());
+      //Parallel.ForEach(Bodies, b => b.ComputeK1());
+      //tree = AccelerateBodies();
+      //Parallel.ForEach(Bodies, b => b.ComputeK2());
+      //tree = AccelerateBodies();
+      //Parallel.ForEach(Bodies, b => b.ComputeK3());
+      //tree = AccelerateBodies();
+      //Parallel.ForEach(Bodies, b => b.ComputeK4());
       Parallel.ForEach(Bodies, b => b.Update());
 
       return tree.CenterOfMass;

@@ -9,7 +9,7 @@ var nativeWindowSettings = new NativeWindowSettings() {
   Flags = ContextFlags.ForwardCompatible,
 };
 
-var bodies = new Body[5000];
+var bodies = new Body[10000];
 
 var universe = new Universe(bodies);
 

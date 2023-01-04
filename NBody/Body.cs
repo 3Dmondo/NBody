@@ -1,7 +1,7 @@
 namespace NBody
 {
 
-  internal class Body
+  internal class Body1
   {
     /// <summary>
     /// The spatial location of the body. 
@@ -85,7 +85,7 @@ namespace NBody
 
   }
 
-  internal class Body1
+  internal class Body
   {
     /// <summary>
     /// The spatial location of the body. 
@@ -104,14 +104,7 @@ namespace NBody
     /// The acceleration accumulated for the body during a single simulation 
     /// step. 
     /// </summary>
-    public Vector Acceleration
-    {
-      get => acceleration;
-      set {
-        PrevAcceleration = Acceleration;
-        acceleration = value;
-      }
-    }
+    public Vector Acceleration { get; set; }
 
     /// <summary>
     /// The mass of the body. 
@@ -123,6 +116,8 @@ namespace NBody
       //https://en.wikipedia.org/wiki/Leapfrog_integration
       Location = Location + Velocity + 0.5 * PrevAcceleration;
       Velocity = Velocity + 0.5 * (PrevAcceleration + Acceleration);
+      PrevAcceleration= Acceleration;
+      Acceleration = Vector.Zero;
     }
   }
 }
