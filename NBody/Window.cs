@@ -39,7 +39,7 @@ namespace NBody
       GL.EnableVertexAttribArray(0);
       _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
       _shader.Use();
-      _camera = new Camera(Vector3.UnitZ * 10.0f, Size.X / (float)Size.Y);
+      _camera = new Camera(Vector3.UnitZ * 20.0f, Size.X / (float)Size.Y);
     }
 
     // Now that initialization is done, let's create our render loop.

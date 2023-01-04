@@ -9,15 +9,7 @@ var nativeWindowSettings = new NativeWindowSettings() {
   Flags = ContextFlags.ForwardCompatible,
 };
 
-var random = new Random();
-
-var bodies = new Body[10000];
-for (int i = 0; i < bodies.Length; i++) {
-  bodies[i] = new Body {
-    Location = RandomInDisk(10),
-    Mass = random.NextDouble() * 0.000000001, 
-  };
-}
+var bodies = new Body[5000];
 
 var universe = new Universe(bodies);
 
@@ -26,17 +18,3 @@ using var window = new Window(
   nativeWindowSettings,
   universe);
 window.Run();
-
-
-Vector RandomInDisk(double radius)
-{
-  var phi = random.NextDouble() * 2.0 * Math.PI;
-  var r = radius * Math.Pow(random.NextDouble(), 1.0 / 3.0);
-  var cosTheta = 2.0 * random.NextDouble() - 1.0;
-  return new Vector(
-    r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Cos(phi),
-    0.0,
-    r * cosTheta
-  );
-}
-

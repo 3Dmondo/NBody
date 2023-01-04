@@ -17,7 +17,7 @@ namespace NBody
     /// The softening factor for the acceleration equation. This dampens the 
     /// the slingshot effect during close encounters of bodies. 
     /// </summary>
-    private const double Epsilon = 0.2; //700;
+    private const double Epsilon = 0.05; //700;
 
     /// <summary>
     /// The minimum width of a tree. Subtrees are not created when if their width 

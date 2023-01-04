@@ -1,8 +1,12 @@
+using System;
+
 namespace NBody
 {
   internal class Universe
   {
+    private const double MassMultiplier = 1e-10;
     public Body[] Bodies { get; private set; }
+    private OcTreeCache OcTreeCache = new OcTreeCache();
 
     public Universe(Body[] bodies)
     {
@@ -13,6 +17,7 @@ namespace NBody
     private void InitVelocities()
     {
       var random = new Random();
+      InitLocations(random);
       var tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => SetBodyVelocity(b, random, tree));
     }
@@ -22,15 +27,35 @@ namespace NBody
       if (b.Location == Vector.Zero) return;
       var d = tree.CenterOfMass - b.Location;
       var distance = Math.Sqrt(d * d);
-      var dir = Vector.Cross(b.Location, new Vector(0, 1, 0));
+      var dir = Vector.Cross(b.Acceleration, new Vector(0, 0, 1));
       dir /= dir.Magnitude();
       var a = Math.Sqrt(b.Acceleration * b.Acceleration);
       b.Velocity = dir * Math.Pow(distance * a, 0.5);
-      var Vy = (random.NextDouble() - 0.5) * b.Velocity.Magnitude() * 0.05f;
-      b.Velocity += new Vector(0, Vy, 0);
+      var Vz = (random.NextDouble() - 0.5) * b.Velocity.Magnitude() * 0.1f;
+      b.Velocity += new Vector(0, 0, Vz);
+    }
+    private void InitLocations(Random random)
+    {
+      Bodies[0] = new Body { Mass = Bodies.Length / 10.0 * MassMultiplier };
+      for (int i = 1; i < Bodies.Length; i++) {
+        Bodies[i] = new Body {
+          Location = RandomInDisk(random, 5),
+          Mass = MassMultiplier + random.NextDouble() * MassMultiplier,
+        };
+      }
     }
 
-    private OcTreeCache OcTreeCache = new OcTreeCache();
+    Vector RandomInDisk(Random random, double radius)
+    {
+      var phi = random.NextDouble() * 2.0 * Math.PI;
+      var r = radius * Math.Pow(random.NextDouble(), 2.0);
+      var cosTheta = 2.0 * random.NextDouble() - 1.0;
+      return new Vector(
+        r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Cos(phi),
+        r * cosTheta,
+        0.1 * r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Sin(phi)
+      );
+    }
 
     public Vector Simulate()
     {
@@ -78,5 +103,6 @@ namespace NBody
             Math.Abs(b.Location.Z))).
         Max();
     }
+
   }
 }
