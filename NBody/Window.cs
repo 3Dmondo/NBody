@@ -23,7 +23,7 @@ namespace NBody
       Universe universe)
             : base(gameWindowSettings, nativeWindowSettings)
     {
-      _vertices = new float[universe.Bodies.Length * 3];
+      _vertices = new float[universe.Bodies.Length * 6];
       Universe = universe;
     }
 
@@ -35,8 +35,10 @@ namespace NBody
       UpdateVertices();
       _vertexArrayObject = GL.GenVertexArray();
       GL.BindVertexArray(_vertexArrayObject);
-      GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+      GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
       GL.EnableVertexAttribArray(0);
+      GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+      GL.EnableVertexAttribArray(1);
       _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
       _shader.Use();
       _camera = new Camera(Vector3.UnitZ * 20.0f, Size.X / (float)Size.Y);
@@ -50,15 +52,16 @@ namespace NBody
       GL.Enable(EnableCap.PointSprite);
       GL.Enable(EnableCap.VertexProgramPointSize);
       GL.Enable(EnableCap.Blend);
+
       _shader.Use();
-      GL.BindVertexArray(_vertexArrayObject);
-      var model = Matrix4.Identity;
       _shader.SetMatrix4(
         "model_view_projection",
-        model *
+        Matrix4.Identity *
         _camera.GetViewMatrix() *
         _camera.GetProjectionMatrix());
       _shader.SetVector3("camera_pos", _camera.Position);
+
+      GL.BindVertexArray(_vertexArrayObject);
       GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 3);
       GL.Disable(EnableCap.PointSprite);
       GL.Disable(EnableCap.VertexProgramPointSize);
@@ -84,9 +87,13 @@ namespace NBody
       var j = 0;
       for (int i = 0; i < Universe.Bodies.Length; i++) {
         var bodyLocation = Universe.Bodies[i].Location;
+        var bodyVelocity = Universe.Bodies[i].Velocity.Unit();
         _vertices[j++] = (float)bodyLocation.X;
         _vertices[j++] = (float)bodyLocation.Y;
         _vertices[j++] = (float)bodyLocation.Z;
+        _vertices[j++] = (float)bodyVelocity.X;
+        _vertices[j++] = (float)bodyVelocity.Y;
+        _vertices[j++] = (float)bodyVelocity.Z;
       }
       GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
       GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StreamDraw);

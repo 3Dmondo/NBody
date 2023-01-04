@@ -1,7 +1,7 @@
 namespace NBody
 {
 
-  internal class Body1
+  internal class Body
   {
     /// <summary>
     /// The spatial location of the body. 
@@ -85,7 +85,7 @@ namespace NBody
 
   }
 
-  internal class Body
+  internal class Body1
   {
     /// <summary>
     /// The spatial location of the body. 
