@@ -78,8 +78,8 @@ namespace NBody
 
     public void Update()
     {
-      Velocity = PrevVelocity + 1 / 6.0 * (K1V + 2.0 * K2V + 2.0 * K3V + K4V);
-      Location = PrevLocation + 1 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L);
+      Velocity = PrevVelocity + 1.0 / 6.0 * (K1V + 2.0 * K2V + 2.0 * K3V + K4V);
+      Location = PrevLocation + 1.0 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L);
       Acceleration = Vector.Zero;
     }
 
