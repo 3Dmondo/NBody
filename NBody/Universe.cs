@@ -1,5 +1,3 @@
-using System;
-
 namespace NBody
 {
   internal class Universe
@@ -70,7 +68,7 @@ namespace NBody
       Parallel.ForEach(Bodies, b => b.ComputeK4());
       Parallel.ForEach(Bodies, b => b.Update());
 
-      return tree.CenterOfMass;
+      return Bodies[0].Location;
     }
 
     private OcTree AccelerateBodies()

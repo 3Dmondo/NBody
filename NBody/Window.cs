@@ -79,11 +79,11 @@ namespace NBody
       base.OnUpdateFrame(e);
 
       if (!Pause) {
-        var centerOfMass = Universe.Simulate();
+        var target = Universe.Simulate();
         _camera.Target = new Vector3(
-          (float)centerOfMass.X,
-          (float)centerOfMass.Y,
-          (float)centerOfMass.Z);
+          (float)target.X,
+          (float)target.Y,
+          (float)target.Z);
         UpdateVertices();
       }
     }

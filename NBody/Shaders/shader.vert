@@ -31,27 +31,31 @@ void main(void)
    float cx = 0.0;
    float cy = 0.0;
    float cz = 0.0;
+
+   float velXSq = Vel.x * Vel.x;
    if (Vel.x > 0.0) {
-     cx += Vel.x * Vel.x;
+     cx += velXSq;
    } else {
-     cy += Vel.x * Vel.x;
-     cz += Vel.x * Vel.x;
+     cy += velXSq;
+     cz += velXSq;
    }
-   
+
+   float velySq = Vel.y * Vel.y;
    if (Vel.y > 0.0) {
-     cy += Vel.y * Vel.y;
+     cy += velySq;
    } else {
-     cx += Vel.y * Vel.y;
-     cz += Vel.y * Vel.y;
+     cx += velySq;
+     cz += velySq;
    }
    
+   float velxSq = Vel.z * Vel.z;
    if (Vel.z > 0.0) {
-     cz += Vel.z * Vel.z;
+     cz += velxSq;
    } else {
-     cy += Vel.z * Vel.z;
-     cx += Vel.z * Vel.z;
+     cy += velxSq;
+     cx += velxSq;
    }
-   ourColor = vec3(pow(cx,0.25), pow(cy,0.25), pow(cz,0.25));
+   ourColor = vec3(pow(cx,0.5), pow(cy,0.5), pow(cz,0.5));
   }
   else
     ourColor = vec3(0.8, 0.8, 1);
