@@ -4,7 +4,7 @@ namespace NBody
 {
   internal class Universe
   {
-    private const double MassMultiplier = 1e-10;
+    private const double MassMultiplier = 1e-11;
     public Body[] Bodies { get; private set; }
     private OcTreeCache OcTreeCache = new OcTreeCache();
 
@@ -54,7 +54,7 @@ namespace NBody
       return new Vector(
         r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Cos(phi),
         r * cosTheta,
-        0.1 * r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Sin(phi)
+        0.05 * r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Sin(phi)
       );
     }
 

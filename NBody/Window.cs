@@ -16,6 +16,8 @@ namespace NBody
 
     private Universe Universe;
     private bool Button1Pressed;
+    private int colourVelocity = 0;
+    private bool Pause = false;
 
     internal Window(
       GameWindowSettings gameWindowSettings,
@@ -63,6 +65,7 @@ namespace NBody
         _camera.GetViewMatrix() *
         _camera.GetProjectionMatrix());
       _shader.SetVector3("camera_pos", _camera.Position);
+      _shader.SetInt("colourVelocity", colourVelocity);
 
       GL.BindVertexArray(_vertexArrayObject);
       GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 3);
@@ -75,14 +78,14 @@ namespace NBody
     {
       base.OnUpdateFrame(e);
 
-      var input = KeyboardState;
-
-      if (input.IsKeyDown(Keys.Escape)) {
-        Close();
+      if (!Pause) {
+        var centerOfMass = Universe.Simulate();
+        _camera.Target = new Vector3(
+          (float)centerOfMass.X,
+          (float)centerOfMass.Y,
+          (float)centerOfMass.Z);
+        UpdateVertices();
       }
-
-      var centerOfMass = Universe.Simulate();
-      UpdateVertices();
     }
 
     private void UpdateVertices()
@@ -103,8 +106,22 @@ namespace NBody
       GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StreamDraw);
     }
 
-    // In the mouse wheel function, we manage all the zooming of the camera.
-    // This is simply done by changing the FOV of the camera.
+    protected override void OnKeyDown(KeyboardKeyEventArgs e)
+    {
+      base.OnKeyDown(e);
+      switch (e.Key) {
+        case Keys.Escape:
+          Close();
+          break;
+        case Keys.C:
+          colourVelocity = colourVelocity > 0 ? 0 : 1;
+          break;
+        case Keys.P:
+          Pause = !Pause; 
+          break;
+      }
+    }
+
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
       base.OnMouseWheel(e);
