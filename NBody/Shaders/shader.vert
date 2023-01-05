@@ -50,6 +50,6 @@ void main(void)
   //}
   //ourColor = vec3(pow(cx,0.25), pow(cy,0.25), pow(cz,0.25));
 
-   ourColor = vec3(1, 1, 1);
+ ourColor = vec3(1, 1, 1);
 }
 

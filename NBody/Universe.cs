@@ -40,7 +40,7 @@ namespace NBody
       Bodies[0] = new Body { Mass = Bodies.Length / 5.0 * MassMultiplier };
       for (int i = 1; i < Bodies.Length; i++) {
         Bodies[i] = new Body {
-          Location = RandomInDisk(random, 5),
+          Location = RandomInDisk(random, 10),
           Mass = MassMultiplier// + random.NextDouble() * MassMultiplier,
         };
       }
