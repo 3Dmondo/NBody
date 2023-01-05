@@ -2,6 +2,8 @@
 
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 Vel;
+layout(location = 2) in float mass;
+
 
 uniform mat4 model_view_projection;
 uniform vec3 camera_pos;
@@ -21,32 +23,33 @@ void main(void)
   pointScale = max(pointScale, minPointScale);
   pointScale = min(pointScale, maxPointScale);
 
-  gl_PointSize = 2.0 * pointScale;
+  gl_PointSize = log(1e11 * mass) * pointScale;
 
-  float cx = 0.0;
-  float cy = 0.0;
-  float cz = 0.0;
-  if (Vel.x > 0.0) {
-    cx += Vel.x * Vel.x;
-  } else {
-    cy += Vel.x * Vel.x;
-    cz += Vel.x * Vel.x;
-  }
+  //float cx = 0.0;
+  //float cy = 0.0;
+  //float cz = 0.0;
+  //if (Vel.x > 0.0) {
+  //  cx += Vel.x * Vel.x;
+  //} else {
+  //  cy += Vel.x * Vel.x;
+  //  cz += Vel.x * Vel.x;
+  //}
+  //
+  //if (Vel.y > 0.0) {
+  //  cy += Vel.y * Vel.y;
+  //} else {
+  //  cx += Vel.y * Vel.y;
+  //  cz += Vel.y * Vel.y;
+  //}
+  //
+  //if (Vel.z > 0.0) {
+  //  cz += Vel.z * Vel.z;
+  //} else {
+  //  cy += Vel.z * Vel.z;
+  //  cx += Vel.z * Vel.z;
+  //}
+  //ourColor = vec3(pow(cx,0.25), pow(cy,0.25), pow(cz,0.25));
 
-  if (Vel.y > 0.0) {
-    cy += Vel.y * Vel.y;
-  } else {
-    cx += Vel.y * Vel.y;
-    cz += Vel.y * Vel.y;
-  }
-
-  if (Vel.z > 0.0) {
-    cz += Vel.z * Vel.z;
-  } else {
-    cy += Vel.z * Vel.z;
-    cx += Vel.z * Vel.z;
-  }
-
-  ourColor = vec3(sqrt(cx), sqrt(cy), sqrt(cz));
+   ourColor = vec3(1, 1, 1);
 }
 
