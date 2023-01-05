@@ -8,6 +8,7 @@ layout(location = 2) in float mass;
 uniform mat4 model_view_projection;
 uniform vec3 camera_pos;
 uniform int colourVelocity;
+uniform int fixedSize;
 
 const float minPointScale = 1.0;
 const float maxPointScale = 100.0;
@@ -18,13 +19,17 @@ out vec3 ourColor; // output a color to the fragment shader
 void main(void)
 {
   gl_Position = vec4(aPosition, 1.0) * model_view_projection;
-  float cameraDist = distance(aPosition.xyz, camera_pos);
 
-  float pointScale = maxDistance / cameraDist ;
-  pointScale = max(pointScale, minPointScale);
-  pointScale = min(pointScale, maxPointScale);
-
-  gl_PointSize = log(1e12 * mass) * pointScale;
+  if (fixedSize > 0){
+    gl_PointSize = 2;
+  }
+  else{
+    float cameraDist = distance(aPosition.xyz, camera_pos);
+    float pointScale = maxDistance / cameraDist ;
+    pointScale = max(pointScale, minPointScale);
+    pointScale = min(pointScale, maxPointScale);
+    gl_PointSize = log(1e12 * mass) * pointScale;
+  }
 
   if (colourVelocity > 0)
   {

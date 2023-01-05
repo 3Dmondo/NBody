@@ -17,6 +17,7 @@ namespace NBody
     private Universe Universe;
     private bool Button1Pressed;
     private int colourVelocity = 0;
+    private int fixedSize = 0;
     private bool Pause = false;
 
     internal Window(
@@ -66,6 +67,7 @@ namespace NBody
         _camera.GetProjectionMatrix());
       _shader.SetVector3("camera_pos", _camera.Position);
       _shader.SetInt("colourVelocity", colourVelocity);
+      _shader.SetInt("fixedSize", fixedSize);
 
       GL.BindVertexArray(_vertexArrayObject);
       GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 3);
@@ -117,7 +119,10 @@ namespace NBody
           colourVelocity = colourVelocity > 0 ? 0 : 1;
           break;
         case Keys.P:
-          Pause = !Pause; 
+          Pause = !Pause;
+          break;
+        case Keys.F:
+          fixedSize = fixedSize > 0 ? 0 : 1;
           break;
       }
     }

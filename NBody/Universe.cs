@@ -35,7 +35,7 @@ namespace NBody
 
     private void InitLocations(Random random)
     {
-      Bodies[0] = new Body { Mass = Bodies.Length / 5.0 * MassMultiplier };
+      Bodies[0] = new Body { Mass = Bodies.Length / 20.0 * MassMultiplier };
       for (int i = 1; i < Bodies.Length; i++) {
         Bodies[i] = new Body {
           Location = RandomInDisk(random, 10),
@@ -47,7 +47,7 @@ namespace NBody
     Vector RandomInDisk(Random random, double radius)
     {
       var phi = random.NextDouble() * 2.0 * Math.PI;
-      var r = radius * Math.Pow(random.NextDouble(), 1.5);
+      var r = 0.1 + radius * Math.Pow(random.NextDouble(), 1.5);
       var cosTheta = 2.0 * random.NextDouble() - 1.0;
       return new Vector(
         r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Cos(phi),
