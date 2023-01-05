@@ -98,10 +98,6 @@ namespace NBody
     {
       double subtreeWidth = HalfWidth;
 
-      // Don't create subtrees if it violates the width limit.
-      //if (subtreeWidth < MinimumWidth)
-      //  return;
-
       int ii = 1, jj = 2, kk = 4;
       double i = 1.0, j = 1.0, k = 1.0;
 
@@ -120,7 +116,6 @@ namespace NBody
         k = -1.0;
       }
 
-      // Determine which subtree the body belongs in and add it to that subtree. 
       int subtreeIndex = ii + jj + kk;
       var subtreeLocation = Location + QuarterWidth * new Vector(i, j, k);
       if (subTrees[subtreeIndex] == null)
@@ -135,7 +130,7 @@ namespace NBody
 
       if ((BodyCount == 1 && body != FirstBody) ||
           (WidthSquare < ToleranceSquare * dSquare)) {
-        var distance = System.Math.Sqrt(dSquare + Epsilon * Epsilon);
+        var distance = Math.Sqrt(dSquare + Epsilon * Epsilon);
         var acc = Constants.G * Mass / (distance * distance * distance);
         body.Acceleration += d * acc;
       } else {
