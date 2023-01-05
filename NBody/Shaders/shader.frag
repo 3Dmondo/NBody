@@ -11,7 +11,7 @@ void main()
     float mag = dot(C,C);
     if (mag > 1.0) discard;   // kill pixels outside circle
     if (fixedSize > 0)
-      outputColor = vec4(1.0, 1.0, 1.0, 1.0);
+      outputColor = vec4(ourColor, 1.0);
     else
       outputColor = vec4(ourColor, 1-pow( mag, 0.1) );
 }
