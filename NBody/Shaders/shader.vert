@@ -10,7 +10,7 @@ uniform vec3 camera_pos;
 
 const float minPointScale = 1.0;
 const float maxPointScale = 100.0;
-const float maxDistance   = 10.0;
+const float maxDistance   = 100.0;
 
 out vec3 ourColor; // output a color to the fragment shader
 
@@ -50,6 +50,6 @@ void main(void)
   //}
   //ourColor = vec3(pow(cx,0.25), pow(cy,0.25), pow(cz,0.25));
 
- ourColor = vec3(1, 1, 1);
+ ourColor = vec3(0.8, 0.8, 1);
 }
 

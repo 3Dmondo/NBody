@@ -54,6 +54,8 @@ namespace NBody
       GL.Enable(EnableCap.PointSprite);
       GL.Enable(EnableCap.VertexProgramPointSize);
       GL.Enable(EnableCap.Blend);
+      //GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+      GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
 
       _shader.Use();
       _shader.SetMatrix4(
