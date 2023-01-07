@@ -29,17 +29,17 @@ namespace NBody
 
     public double KineticEnergy()
     {
-      return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity)).Sum();
+      return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity)).Sum() / MassMultiplier;
     }
 
     public double PotentialEnergy()
     {
-      return Bodies.Select(b => b.PotentialEnergy).Sum();
+      return Bodies.Select(b => b.PotentialEnergy).Sum() / MassMultiplier;
     }
 
     public double TotalEnergy()
     {
-      return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity) + b.PotentialEnergy).Sum();
+      return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity) + b.PotentialEnergy).Sum() / MassMultiplier;
     }
 
     private void InitVelocities()

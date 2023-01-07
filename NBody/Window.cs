@@ -62,9 +62,9 @@ namespace NBody
           RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
         TextRenderer.RenderText(
           $"Fps: {1.0 / e.Time:F1}\n" +
-          $"Kinetic energy: {Universe.KineticEnergy():E2}\n" + 
-          $"Potential energy: {Universe.PotentialEnergy():E2}\n" + 
-          $"Total energy: {Universe.TotalEnergy():E2}",
+          $"Kinetic energy: {Universe.KineticEnergy():0.0E-0}\n" + 
+          $"Potential energy: {Universe.PotentialEnergy():0.0E-0}\n" + 
+          $"Total energy: {Universe.TotalEnergy():0.0E-0}",
           0, 0, 1, new Vector2(1.0f, 0),
           Size, new Vector3(1f, 1f, 1f));
       }
