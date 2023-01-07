@@ -6,17 +6,23 @@ using static System.Net.Mime.MediaTypeNames;
 
 namespace NBody.Text
 {
-  internal class MyTextRenderer
+  internal class TextRenderer
   {
     const int size = 16;
 
-    Dictionary<uint, Character> _characters = new Dictionary<uint, Character>();
-    int _vao;
-    int _vbo;
-    Font mono = new Font(FontFamily.GenericMonospace, size);
+    private Dictionary<uint, Character> _characters = new Dictionary<uint, Character>();
+    private int _vao;
+    private int _vbo;
+    private Font mono = new Font(FontFamily.GenericMonospace, size);
+    private Shader TextShader;
 
-    public MyTextRenderer()
+    public float CharWithd => mono.Size;
+    public float CharHeight => mono.Height;
+
+    public TextRenderer()
     {
+      TextShader = new Shader("Shaders/textShader.vert", "Shaders/textShader.frag");
+
       for (byte c = 32; c < 127; c++) {
         var character = ((char)c).ToString();
 
@@ -47,9 +53,9 @@ namespace NBody.Text
         ch.Bearing = new Vector2(0, 0);
         ch.Advance = size;
         _characters.Add(c, ch);
-      }
+  }
 
-      float[] vquad =
+  float[] vquad =
       {
         // x      y      u     v    
         0.0f, -1.0f,   0.0f, 0.0f,
@@ -77,8 +83,22 @@ namespace NBody.Text
       GL.BindVertexArray(0);
     }
 
-    public void RenderText(string text, float x, float y, float scale, Vector2 dir)
+    public void RenderText(
+      string text,
+      float x,
+      float y,
+      float scale,
+      Vector2 dir,
+      Vector2i windowSize,
+      Vector3 color)
     {
+      TextShader.Use();
+      
+      var projectionM = Matrix4.CreateOrthographicOffCenter(0.0f, windowSize.X, windowSize.Y, 0.0f, -1.0f, 1.0f);
+      GL.UniformMatrix4(1, false, ref projectionM);
+      GL.Uniform3(2, color);
+
+
       GL.ActiveTexture(TextureUnit.Texture0);
       GL.BindVertexArray(_vao);
 
@@ -88,7 +108,13 @@ namespace NBody.Text
 
       // Iterate through all characters
       float char_x = 0.0f;
+      float char_y = 0.0f;
       foreach (var c in text) {
+        if (c == '\n') {
+          char_y += CharHeight;
+          char_x = 0f;
+        }
+          
         if (_characters.ContainsKey(c) == false)
           continue;
         Character ch = _characters[c];
@@ -96,7 +122,7 @@ namespace NBody.Text
         float w = ch.Size.X * scale;
         float h = ch.Size.Y * scale;
         float xrel = char_x + ch.Bearing.X * scale;
-        float yrel = (ch.Size.Y - ch.Bearing.Y) * scale;
+        float yrel = char_y + (ch.Size.Y - ch.Bearing.Y) * scale;
 
         // Now advance cursors for next glyph (note that advance is number of 1/64 pixels)
         char_x += ch.Advance * scale; // Bitshift by 6 to get value in pixels (2^6 = 64 (divide amount of 1/64th pixels by 64 to get amount of pixels))

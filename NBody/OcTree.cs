@@ -130,9 +130,10 @@ namespace NBody
 
       if ((BodyCount == 1 && body != FirstBody) ||
           (WidthSquare < ToleranceSquare * dSquare)) {
-        var distance = Math.Sqrt(dSquare + Epsilon * Epsilon);
-        var acc = Constants.G * Mass / (distance * distance * distance);
+        var distance = Math.Sqrt(dSquare) + Epsilon;
+        var acc = Mass / (distance * distance * distance);
         body.Acceleration += d * acc;
+        body.PotentialEnergy += -body.Mass * Mass / distance;
       } else {
         for (int i = 0; i < 8; i++)
           if (null != subTrees[i]) {

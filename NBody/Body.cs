@@ -19,6 +19,7 @@ namespace NBody
     /// </summary>
     public Vector Acceleration;
 
+    public double PotentialEnergy;
 
     /// <summary>
     /// The mass of the body. 
@@ -47,6 +48,7 @@ namespace NBody
       Velocity = PrevVelocity + Acceleration * 0.5;
       Location = PrevLocation + Velocity * 0.5;
       Acceleration = Vector.Zero;
+      PotentialEnergy = 0;
     }
 
     public void ComputeK2()
@@ -56,6 +58,7 @@ namespace NBody
       Velocity = PrevVelocity + Acceleration * 0.5;
       Location = PrevLocation + Velocity * 0.5;
       Acceleration = Vector.Zero;
+      PotentialEnergy = 0;
     }
 
     public void ComputeK3()
@@ -65,6 +68,7 @@ namespace NBody
       Velocity = PrevVelocity + Acceleration * 0.5;
       Location = PrevLocation + Velocity * 0.5;
       Acceleration = Vector.Zero;
+      PotentialEnergy = 0;
     }
 
     public void ComputeK4()

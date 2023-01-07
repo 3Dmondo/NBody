@@ -2,7 +2,7 @@ namespace NBody
 {
   internal class Universe
   {
-    private const double MassMultiplier = 1e-11;
+    private const double MassMultiplier = 1e-9;
     public Body[] Bodies { get; private set; }
     private OcTreeCache OcTreeCache = new OcTreeCache();
 
@@ -10,6 +10,36 @@ namespace NBody
     {
       Bodies = bodies;
       InitVelocities();
+    }
+
+    public Vector Simulate()
+    {
+      OcTree tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK1());
+      tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK2());
+      tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK3());
+      tree = AccelerateBodies();
+      Parallel.ForEach(Bodies, b => b.ComputeK4());
+      Parallel.ForEach(Bodies, b => b.Update());
+
+      return Bodies[0].Location;
+    }
+
+    public double KineticEnergy()
+    {
+      return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity)).Sum();
+    }
+
+    public double PotentialEnergy()
+    {
+      return Bodies.Select(b => b.PotentialEnergy).Sum();
+    }
+
+    public double TotalEnergy()
+    {
+      return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity) + b.PotentialEnergy).Sum();
     }
 
     private void InitVelocities()
@@ -44,7 +74,7 @@ namespace NBody
       }
     }
 
-    Vector RandomInDisk(Random random, double radius)
+    private Vector RandomInDisk(Random random, double radius)
     {
       var phi = random.NextDouble() * 2.0 * Math.PI;
       var r = 0.1 + radius * Math.Pow(random.NextDouble(), 1.5);
@@ -54,21 +84,6 @@ namespace NBody
         r * cosTheta,
         0.05 * r * Math.Sqrt(1.0 - cosTheta * cosTheta) * Math.Sin(phi)
       );
-    }
-
-    public Vector Simulate()
-    {
-      OcTree tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK1());
-      tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK2());
-      tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK3());
-      tree = AccelerateBodies();
-      Parallel.ForEach(Bodies, b => b.ComputeK4());
-      Parallel.ForEach(Bodies, b => b.Update());
-
-      return Bodies[0].Location;
     }
 
     private OcTree AccelerateBodies()

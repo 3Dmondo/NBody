@@ -1,4 +1,4 @@
-using System.IO;
+using System.Runtime.InteropServices;
 using NBody.Text;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -10,18 +10,19 @@ namespace NBody
 {
   internal class Window : GameWindow
   {
-    private readonly float[] _vertices;
-    private int _vertexBufferObject;
-    private int _vertexArrayObject;
-    private Shader StarShader;
-    private Shader TextShader;
     private Camera _camera;
-    private MyTextRenderer TextRenderer;
+
+    private TextRenderer TextRenderer;
+    private SimulationRenderer SimulationRenderer;
+    
     private Universe Universe;
+
     private bool Button1Pressed;
     private int colourVelocity = 0;
     private int fixedSize = 0;
     private bool Pause = false;
+    private bool renderText;
+    private bool renderHelp;
 
     internal Window(
       GameWindowSettings gameWindowSettings,
@@ -29,7 +30,6 @@ namespace NBody
       Universe universe)
             : base(gameWindowSettings, nativeWindowSettings)
     {
-      _vertices = new float[universe.Bodies.Length * 7];
       Universe = universe;
     }
 
@@ -37,24 +37,13 @@ namespace NBody
     {
       base.OnLoad();
       GL.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-      _vertexBufferObject = GL.GenBuffer();
-      UpdateVertices();
-      _vertexArrayObject = GL.GenVertexArray();
-      GL.BindVertexArray(_vertexArrayObject);
-      GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 7 * sizeof(float), 0);
-      GL.EnableVertexAttribArray(0);
-      GL.VertexAttribPointer(1, 3, VertexAttribPointerType.Float, false, 7 * sizeof(float), 3 * sizeof(float));
-      GL.EnableVertexAttribArray(1);
-      GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 7 * sizeof(float), 6 * sizeof(float));
-      GL.EnableVertexAttribArray(2);
-      StarShader = new Shader("Shaders/starShader.vert", "Shaders/starShader.frag");
-      TextShader = new Shader("Shaders/textShader.vert", "Shaders/textShader.frag");
 
-      //_shader.Use();
       _camera = new Camera(Vector3.UnitZ * 20.0f, Size.X / (float)Size.Y);
 
-      TextRenderer = new MyTextRenderer();
+      SimulationRenderer = new SimulationRenderer(Universe);
 
+      if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        TextRenderer = new TextRenderer();
     }
 
     // Now that initialization is done, let's create our render loop.
@@ -62,33 +51,28 @@ namespace NBody
     {
       base.OnRenderFrame(e);
       GL.Clear(ClearBufferMask.ColorBufferBit);
-      Matrix4 projectionM = Matrix4.CreateScale(new Vector3(1f / this.Size.X, 1f / this.Size.Y, 1.0f));
-      projectionM = Matrix4.CreateOrthographicOffCenter(0.0f, this.Size.X, this.Size.Y, 0.0f, -1.0f, 1.0f);
-      TextShader.Use();
-      GL.UniformMatrix4(1, false, ref projectionM);
 
-      GL.Uniform3(2, new Vector3(0.5f, 0.8f, 0.2f));
-      TextRenderer.RenderText("Hello world!", 0, 0, 1, new Vector2(1.0f, 0.0f));
+      if (renderHelp &&
+          RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+        TextRenderer.RenderText(
+          HelpString,
+          0, 0, 1, new Vector2(1.0f, 0),
+          Size, new Vector3(1f, 1f, 1f));
+      } else if (renderText &&
+          RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+        TextRenderer.RenderText(
+          $"Fps: {1.0 / e.Time:F1}\n" +
+          $"Kinetic energy: {Universe.KineticEnergy():E2}\n" + 
+          $"Potential energy: {Universe.PotentialEnergy():E2}\n" + 
+          $"Total energy: {Universe.TotalEnergy():E2}",
+          0, 0, 1, new Vector2(1.0f, 0),
+          Size, new Vector3(1f, 1f, 1f));
+      }
 
-      GL.Enable(EnableCap.PointSprite);
-      GL.Enable(EnableCap.VertexProgramPointSize);
-      GL.Enable(EnableCap.Blend);
-      GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
-
-      StarShader.Use();
-      StarShader.SetMatrix4(
-        "model_view_projection",
-        Matrix4.Identity *
-        _camera.GetViewMatrix() *
-        _camera.GetProjectionMatrix());
-      StarShader.SetVector3("camera_pos", _camera.Position);
-      StarShader.SetInt("colourVelocity", colourVelocity);
-      StarShader.SetInt("fixedSize", fixedSize);
-
-      GL.BindVertexArray(_vertexArrayObject);
-      GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 3);
-      GL.Disable(EnableCap.PointSprite);
-      GL.Disable(EnableCap.VertexProgramPointSize);
+      SimulationRenderer.RenderSimulation(
+        _camera,
+        colourVelocity,
+        fixedSize);
 
       SwapBuffers();
     }
@@ -98,32 +82,17 @@ namespace NBody
       base.OnUpdateFrame(e);
 
       if (!Pause) {
-        var target = Universe.Simulate();
-        _camera.Target = new Vector3(
-          (float)target.X,
-          (float)target.Y,
-          (float)target.Z);
-        UpdateVertices();
+        SimulationRenderer.UpdateFrame(_camera);
       }
     }
 
-    private void UpdateVertices()
-    {
-      var j = 0;
-      for (int i = 0; i < Universe.Bodies.Length; i++) {
-        var bodyLocation = Universe.Bodies[i].Location;
-        var bodyVelocity = Universe.Bodies[i].Velocity.Unit();
-        _vertices[j++] = (float)bodyLocation.X;
-        _vertices[j++] = (float)bodyLocation.Y;
-        _vertices[j++] = (float)bodyLocation.Z;
-        _vertices[j++] = (float)bodyVelocity.X;
-        _vertices[j++] = (float)bodyVelocity.Y;
-        _vertices[j++] = (float)bodyVelocity.Z;
-        _vertices[j++] = (float)Universe.Bodies[i].Mass;
-      }
-      GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-      GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Length * sizeof(float), _vertices, BufferUsageHint.StreamDraw);
-    }
+    private const string HelpString =
+ @"ESC: Close
+F1: Show help
+p: Pause simulation
+t: Show text info
+f: Point sized / blurry stars
+c: Star velocities as colours";
 
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
@@ -140,6 +109,17 @@ namespace NBody
           break;
         case Keys.F:
           fixedSize = fixedSize > 0 ? 0 : 1;
+          break;
+        case Keys.T:
+          renderText = !renderText;
+          break;
+        case Keys.F11:
+          if (WindowState == WindowState.Fullscreen)
+            WindowState = WindowState.Normal;
+          else WindowState = WindowState.Fullscreen;
+          break;
+        case Keys.F1:
+          renderHelp= !renderHelp;
           break;
       }
     }
@@ -192,17 +172,6 @@ namespace NBody
 
     protected override void OnUnload()
     {
-      // Unbind all the resources by binding the targets to 0/null.
-      GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-      GL.BindVertexArray(0);
-      GL.UseProgram(0);
-
-      // Delete all the resources.
-      GL.DeleteBuffer(_vertexBufferObject);
-      GL.DeleteVertexArray(_vertexArrayObject);
-
-      GL.DeleteProgram(StarShader.Handle);
-
       base.OnUnload();
     }
   }

@@ -9,12 +9,20 @@ var nativeWindowSettings = new NativeWindowSettings() {
   Flags = ContextFlags.ForwardCompatible,
 };
 
+#if DEBUG
+var bodies = new Body[100];
+#else
 var bodies = new Body[10000];
+#endif
 
 var universe = new Universe(bodies);
 
 using var window = new Window(
-  GameWindowSettings.Default,
+  new GameWindowSettings {
+    IsMultiThreaded = false,
+    UpdateFrequency = 0,
+    RenderFrequency = 0
+  },
   nativeWindowSettings,
-  universe);
+  universe); ;
 window.Run();
