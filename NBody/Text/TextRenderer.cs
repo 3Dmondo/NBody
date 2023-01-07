@@ -83,7 +83,7 @@ namespace NBody.Text
       GL.BindVertexArray(0);
     }
 
-    public void RenderText(
+    public float RenderText(
       string text,
       float x,
       float y,
@@ -142,6 +142,8 @@ namespace NBody.Text
 
       GL.BindVertexArray(0);
       GL.BindTexture(TextureTarget.Texture2D, 0);
+
+      return char_y + CharHeight;
     }
   }
 }

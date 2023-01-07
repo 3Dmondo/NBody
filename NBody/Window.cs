@@ -52,20 +52,24 @@ namespace NBody
       base.OnRenderFrame(e);
       GL.Clear(ClearBufferMask.ColorBufferBit);
 
+      var ypos = 0.0f;
+      
       if (renderHelp &&
           RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-        TextRenderer.RenderText(
+        ypos = TextRenderer.RenderText(
           HelpString,
-          0, 0, 1, new Vector2(1.0f, 0),
+          0, ypos, 1, new Vector2(1.0f, 0),
           Size, new Vector3(1f, 1f, 1f));
-      } else if (renderText &&
+      } 
+      if (renderText &&
           RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-        TextRenderer.RenderText(
+        ypos = TextRenderer.RenderText(
           $"Fps: {1.0 / e.Time:F1}\n" +
+          $"Number of stars: {Universe.Bodies.Length}\n" +
           $"Kinetic energy: {Universe.KineticEnergy():0.0E-0}\n" + 
           $"Potential energy: {Universe.PotentialEnergy():0.0E-0}\n" + 
           $"Total energy: {Universe.TotalEnergy():0.0E-0}",
-          0, 0, 1, new Vector2(1.0f, 0),
+          0, ypos, 1, new Vector2(1.0f, 0),
           Size, new Vector3(1f, 1f, 1f));
       }
 
@@ -88,11 +92,12 @@ namespace NBody
 
     private const string HelpString =
  @"ESC: Close
-F1: Show help
+F1: (show|hide) help
 p: Pause simulation
 t: Show text info
-f: Point sized / blurry stars
-c: Star velocities as colours";
+f: (point sized|blurry) stars
+c: Star velocities as colours
+Mouse left button + mouse move: move camera";
 
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
     {
