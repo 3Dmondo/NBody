@@ -19,10 +19,10 @@ namespace NBody
 
     private bool Button1Pressed;
     private int colourVelocity = 0;
-    private int fixedSize = 0;
+    private int fixedSize = 1;
     private bool Pause = false;
     private bool renderText;
-    private bool renderHelp;
+    private bool renderHelp = true;
 
     internal Window(
       GameWindowSettings gameWindowSettings,
@@ -93,6 +93,7 @@ namespace NBody
     private const string HelpString =
  @"ESC: Close
 F1: (show|hide) help
+F11: Full Screen
 p: Pause simulation
 t: Show text info
 f: (point sized|blurry) stars

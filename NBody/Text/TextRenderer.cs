@@ -25,13 +25,14 @@ namespace NBody.Text
 
       for (byte c = 32; c < 127; c++) {
         var character = ((char)c).ToString();
-
-        var bitmap = new Bitmap(size, mono.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-        var gfx = Graphics.FromImage(bitmap);
+        var gfx = Graphics.FromImage(new Bitmap(1, 1));
+        var charSize = gfx.MeasureString(character, mono);
+        var bitmap = new Bitmap((int)charSize.Width, (int)charSize.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+        gfx = Graphics.FromImage(bitmap);
         gfx.TextRenderingHint = TextRenderingHint.AntiAlias;
         gfx.DrawString(character, mono, Brushes.White, new PointF());
 
-        var data = bitmap.LockBits(new Rectangle(0, 0, size, mono.Height),
+        var data = bitmap.LockBits(new Rectangle(0, 0, (int)charSize.Width, (int)charSize.Height),
                         System.Drawing.Imaging.ImageLockMode.ReadOnly,
                         System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
