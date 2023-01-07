@@ -1,3 +1,5 @@
+using System.IO;
+using NBody.Text;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -11,9 +13,10 @@ namespace NBody
     private readonly float[] _vertices;
     private int _vertexBufferObject;
     private int _vertexArrayObject;
-    private Shader _shader;
+    private Shader StarShader;
+    private Shader TextShader;
     private Camera _camera;
-
+    private MyTextRenderer TextRenderer;
     private Universe Universe;
     private bool Button1Pressed;
     private int colourVelocity = 0;
@@ -44,9 +47,14 @@ namespace NBody
       GL.EnableVertexAttribArray(1);
       GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 7 * sizeof(float), 6 * sizeof(float));
       GL.EnableVertexAttribArray(2);
-      _shader = new Shader("Shaders/shader.vert", "Shaders/shader.frag");
-      _shader.Use();
+      StarShader = new Shader("Shaders/starShader.vert", "Shaders/starShader.frag");
+      TextShader = new Shader("Shaders/textShader.vert", "Shaders/textShader.frag");
+
+      //_shader.Use();
       _camera = new Camera(Vector3.UnitZ * 20.0f, Size.X / (float)Size.Y);
+
+      TextRenderer = new MyTextRenderer();
+
     }
 
     // Now that initialization is done, let's create our render loop.
@@ -54,25 +62,34 @@ namespace NBody
     {
       base.OnRenderFrame(e);
       GL.Clear(ClearBufferMask.ColorBufferBit);
+      Matrix4 projectionM = Matrix4.CreateScale(new Vector3(1f / this.Size.X, 1f / this.Size.Y, 1.0f));
+      projectionM = Matrix4.CreateOrthographicOffCenter(0.0f, this.Size.X, this.Size.Y, 0.0f, -1.0f, 1.0f);
+      TextShader.Use();
+      GL.UniformMatrix4(1, false, ref projectionM);
+
+      GL.Uniform3(2, new Vector3(0.5f, 0.8f, 0.2f));
+      TextRenderer.RenderText("Hello world!", 0, 0, 1, new Vector2(1.0f, 0.0f));
+
       GL.Enable(EnableCap.PointSprite);
       GL.Enable(EnableCap.VertexProgramPointSize);
       GL.Enable(EnableCap.Blend);
       GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.One);
 
-      _shader.Use();
-      _shader.SetMatrix4(
+      StarShader.Use();
+      StarShader.SetMatrix4(
         "model_view_projection",
         Matrix4.Identity *
         _camera.GetViewMatrix() *
         _camera.GetProjectionMatrix());
-      _shader.SetVector3("camera_pos", _camera.Position);
-      _shader.SetInt("colourVelocity", colourVelocity);
-      _shader.SetInt("fixedSize", fixedSize);
+      StarShader.SetVector3("camera_pos", _camera.Position);
+      StarShader.SetInt("colourVelocity", colourVelocity);
+      StarShader.SetInt("fixedSize", fixedSize);
 
       GL.BindVertexArray(_vertexArrayObject);
       GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 3);
       GL.Disable(EnableCap.PointSprite);
       GL.Disable(EnableCap.VertexProgramPointSize);
+
       SwapBuffers();
     }
 
@@ -184,7 +201,7 @@ namespace NBody
       GL.DeleteBuffer(_vertexBufferObject);
       GL.DeleteVertexArray(_vertexArrayObject);
 
-      GL.DeleteProgram(_shader.Handle);
+      GL.DeleteProgram(StarShader.Handle);
 
       base.OnUnload();
     }

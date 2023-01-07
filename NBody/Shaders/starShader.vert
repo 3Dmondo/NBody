@@ -61,6 +61,11 @@ void main(void)
      cx += velxSq;
    }
    ourColor = vec3(pow(cx,0.5), pow(cy,0.5), pow(cz,0.5));
+
+   if (dot(Vel,normalize(aPosition)) > 0)
+     ourColor = vec3(1, 0, 0);
+   else
+     ourColor = vec3(0, 0, 1);
   }
   else
     ourColor = vec3(0.8, 0.8, 1);
