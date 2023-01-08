@@ -145,7 +145,7 @@ Mouse left button + mouse move: move camera";
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
       base.OnMouseWheel(e);
-      _camera.Position *= 1.0f + 0.1f * e.OffsetY;
+      _camera.Position +=  (_camera.Position - _camera.Target) * 0.1f * e.OffsetY;
     }
 
     protected override void OnMouseMove(MouseMoveEventArgs e)

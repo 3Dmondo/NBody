@@ -69,8 +69,11 @@ namespace NBody
       GL.GenBuffers(1, InstanceVertexBufferObject);
       GL.BindBuffer(BufferTarget.ArrayBuffer, InstanceVertexBufferObject[0]);
       GL.EnableVertexAttribArray(1);
-      GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
+      GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
       GL.VertexAttribDivisor(1, 1);
+      GL.EnableVertexAttribArray(2);
+      GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, 5 * sizeof(float), 4 * sizeof(float));
+      GL.VertexAttribDivisor(2, 1);
 
       Shader = new Shader("Shaders/cubeShader.vert", "Shaders/cubeShader.frag");
       Shader.Use();
@@ -85,7 +88,8 @@ namespace NBody
         Matrix4.Identity *
         camera.GetViewMatrix() *
         camera.GetProjectionMatrix());
-      
+      Shader.SetVector3("camera_pos", camera.Position);
+
       GL.BindVertexArray(VertexArrayObject);
       GL.DrawArraysInstanced(PrimitiveType.Lines, 0, Vertices.Length / 3, Count);
       GL.BindVertexArray(0);
@@ -98,16 +102,13 @@ namespace NBody
       GL.EnableVertexAttribArray(1);
       GL.BindBuffer(BufferTarget.ArrayBuffer, InstanceVertexBufferObject[0]);
       GL.BufferData(BufferTarget.ArrayBuffer, InstanceData.Length * sizeof(float), InstanceData, BufferUsageHint.StreamDraw);
-      //GL.VertexAttribPointer(1, 4, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
-      //GL.VertexAttribFormat(1, 4, VertexAttribType.Float, false, 1);
-      //GL.VertexAttribDivisor(1, 1);
     }
 
     private int FillInstanceData()
     {
       var count = Universe.OcTreeCache.Count;
-      if (null == InstanceData || InstanceData.Length < count * 4) {
-        InstanceData = new float[count * 4];
+      if (null == InstanceData || InstanceData.Length < count * 5) {
+        InstanceData = new float[count * 5];
       }
       int j = 0;
       foreach (var ocTree in Universe.OcTreeCache.ocTrees) {
@@ -115,6 +116,7 @@ namespace NBody
         InstanceData[j++] = (float)ocTree.Location.Y;
         InstanceData[j++] = (float)ocTree.Location.Z;
         InstanceData[j++] = (float)ocTree.HalfWidth;
+        InstanceData[j++] = ocTree.BodyCount;
       }
       return count;
     }
