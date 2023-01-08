@@ -49,8 +49,6 @@ namespace NBody
     private int VertexBufferObject;
     private int VertexArrayObject;
     private int[] InstanceVertexBufferObject = new int[2];
-    //private int InstanceVertexArrayObject;
-
 
     private Shader Shader;
     private int Count;

@@ -8,7 +8,7 @@ layout(location = 2) in float mass;
 uniform mat4 model_view_projection;
 uniform vec3 camera_pos;
 uniform int colourVelocity;
-uniform int fixedSize;
+uniform int blurry;
 
 const float minPointScale = 1.0;
 const float maxPointScale = 100.0;
@@ -20,16 +20,16 @@ void main(void)
 {
   gl_Position = vec4(aPosition, 1.0) * model_view_projection;
 
-  if (fixedSize > 0){
-    gl_PointSize = 2;
+  float cameraDist = distance(aPosition.xyz, camera_pos);
+  float pointScale = maxDistance / cameraDist ;
+  if (blurry == 0)
+  {
+    pointScale *= 0.1;
   }
-  else{
-    float cameraDist = distance(aPosition.xyz, camera_pos);
-    float pointScale = maxDistance / cameraDist ;
-    pointScale = max(pointScale, minPointScale);
-    pointScale = min(pointScale, maxPointScale);
-    gl_PointSize = log(1e10 * mass) * pointScale;
-  }
+  pointScale = max(pointScale, minPointScale);
+  pointScale = min(pointScale, maxPointScale);
+
+  gl_PointSize = log(1e10 * mass) * pointScale;  
 
   if (colourVelocity > 0)
   {

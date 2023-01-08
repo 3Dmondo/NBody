@@ -19,7 +19,7 @@ namespace NBody
 
     private bool Button1Pressed;
     private int colourVelocity = 0;
-    private int fixedSize = 1;
+    private int Blurry = 0;
     private bool Pause = false;
     private bool renderText;
     private bool renderHelp = true;
@@ -79,7 +79,7 @@ namespace NBody
       SimulationRenderer.RenderSimulation(
         _camera,
         colourVelocity,
-        fixedSize);
+        Blurry);
 
       if (renderOcTrees)
         OctreeRenderer.RenderOcTrees(_camera);
@@ -104,7 +104,7 @@ F1: (show|hide) help
 F11: Full Screen
 p: Pause simulation
 t: Show text info
-f: (point sized|blurry) stars
+b: (sharp|blurry) stars
 c: Star velocities as colours
 o: (show|hide) octree structure
 Mouse left button + mouse move: move camera";
@@ -122,8 +122,8 @@ Mouse left button + mouse move: move camera";
         case Keys.P:
           Pause = !Pause;
           break;
-        case Keys.F:
-          fixedSize = fixedSize > 0 ? 0 : 1;
+        case Keys.B:
+          Blurry = Blurry > 0 ? 0 : 1;
           break;
         case Keys.T:
           renderText = !renderText;
