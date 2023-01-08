@@ -21,7 +21,7 @@ namespace NBody
     private int colourVelocity = 0;
     private int Blurry = 0;
     private bool Pause = false;
-    private bool renderText;
+    private bool renderText = true;
     private bool renderHelp = true;
     private bool renderOcTrees = false;
 
@@ -58,7 +58,7 @@ namespace NBody
 
       if (renderHelp &&
           RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-        ypos = TextRenderer.RenderText(
+        ypos = 10 + TextRenderer.RenderText(
           HelpString,
           0, ypos, 1, new Vector2(1.0f, 0),
           Size, new Vector3(1f, 1f, 1f));
