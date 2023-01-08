@@ -69,6 +69,7 @@ namespace NBody
           $"Fps: {1.0 / e.Time:F1}\n" +
           $"Number of stars: {Universe.Bodies.Length}\n" +
           $"Number of octree cells: {Universe.OcTreeCache.Count}\n" +
+          $"Average interactions per star: {Universe.Bodies.Select(b => b.Interactions).Average()}\n" +
           $"Kinetic energy: {Universe.KineticEnergy():0.0E-0}\n" +
           $"Potential energy: {Universe.PotentialEnergy():0.0E-0}\n" +
           $"Total energy: {Universe.TotalEnergy():0.0E-0}",
@@ -145,7 +146,7 @@ Mouse left button + mouse move: move camera";
     protected override void OnMouseWheel(MouseWheelEventArgs e)
     {
       base.OnMouseWheel(e);
-      _camera.Position +=  (_camera.Position - _camera.Target) * 0.1f * e.OffsetY;
+      _camera.Position += (_camera.Position - _camera.Target) * 0.1f * e.OffsetY;
     }
 
     protected override void OnMouseMove(MouseMoveEventArgs e)

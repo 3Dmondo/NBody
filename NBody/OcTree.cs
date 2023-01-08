@@ -134,6 +134,7 @@ namespace NBody
         var acc = Mass / (distance * distance * distance);
         body.Acceleration += d * acc;
         body.PotentialEnergy += -body.Mass * Mass / distance;
+        body.Interactions++;
       } else {
         for (int i = 0; i < 8; i++)
           if (null != subTrees[i]) {

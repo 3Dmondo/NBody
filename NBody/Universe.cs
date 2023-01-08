@@ -90,7 +90,10 @@ namespace NBody
     {
       double halfWidth = GetHalfWidth();
       OcTree tree = BuildOcTree(halfWidth);
-      Parallel.ForEach(Bodies, tree.Accelerate);
+      Parallel.ForEach(Bodies,b => {
+        b.Interactions = 0;
+        tree.Accelerate(b);
+        });
       return tree;
     }
 

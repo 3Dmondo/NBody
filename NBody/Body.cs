@@ -26,6 +26,8 @@ namespace NBody
     /// </summary>
     public double Mass;
 
+    public int Interactions;
+
     private Vector PrevLocation;
     private Vector PrevVelocity;
 
