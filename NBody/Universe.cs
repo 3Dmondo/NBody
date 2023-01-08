@@ -4,7 +4,8 @@ namespace NBody
   {
     private const double MassMultiplier = 1e-9;
     public Body[] Bodies { get; private set; }
-    private OcTreeCache OcTreeCache = new OcTreeCache();
+    public OcTreeCache OcTreeCache { get; private set; } = new OcTreeCache();
+    public OcTree Tree { get; private set; }
 
     public Universe(Body[] bodies)
     {
@@ -14,16 +15,15 @@ namespace NBody
 
     public Vector Simulate()
     {
-      OcTree tree = AccelerateBodies();
+      Tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK1());
-      tree = AccelerateBodies();
+      Tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK2());
-      tree = AccelerateBodies();
+      Tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK3());
-      tree = AccelerateBodies();
+      Tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK4());
       Parallel.ForEach(Bodies, b => b.Update());
-
       return Bodies[0].Location;
     }
 
@@ -96,7 +96,7 @@ namespace NBody
 
     private OcTree BuildOcTree(double halfWidth)
     {
-      OcTreeCache.Current = 0;
+      OcTreeCache.Count = 0;
       var tree = OcTreeCache.GetNextOcTree(Vector.Zero, 2.1 * halfWidth);
 
       foreach (var body in Bodies) {

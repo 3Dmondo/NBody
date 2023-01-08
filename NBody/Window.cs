@@ -14,7 +14,7 @@ namespace NBody
 
     private TextRenderer TextRenderer;
     private SimulationRenderer SimulationRenderer;
-    
+    private OctreeRenderer OctreeRenderer;
     private Universe Universe;
 
     private bool Button1Pressed;
@@ -23,6 +23,7 @@ namespace NBody
     private bool Pause = false;
     private bool renderText;
     private bool renderHelp = true;
+    private bool renderOcTrees = false;
 
     internal Window(
       GameWindowSettings gameWindowSettings,
@@ -41,6 +42,7 @@ namespace NBody
       _camera = new Camera(Vector3.UnitZ * 20.0f, Size.X / (float)Size.Y);
 
       SimulationRenderer = new SimulationRenderer(Universe);
+      OctreeRenderer = new OctreeRenderer(Universe);
 
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         TextRenderer = new TextRenderer();
@@ -53,21 +55,22 @@ namespace NBody
       GL.Clear(ClearBufferMask.ColorBufferBit);
 
       var ypos = 0.0f;
-      
+
       if (renderHelp &&
           RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
         ypos = TextRenderer.RenderText(
           HelpString,
           0, ypos, 1, new Vector2(1.0f, 0),
           Size, new Vector3(1f, 1f, 1f));
-      } 
+      }
       if (renderText &&
           RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
         ypos = TextRenderer.RenderText(
           $"Fps: {1.0 / e.Time:F1}\n" +
           $"Number of stars: {Universe.Bodies.Length}\n" +
-          $"Kinetic energy: {Universe.KineticEnergy():0.0E-0}\n" + 
-          $"Potential energy: {Universe.PotentialEnergy():0.0E-0}\n" + 
+          $"Number of octree cells: {Universe.OcTreeCache.Count}\n" +
+          $"Kinetic energy: {Universe.KineticEnergy():0.0E-0}\n" +
+          $"Potential energy: {Universe.PotentialEnergy():0.0E-0}\n" +
           $"Total energy: {Universe.TotalEnergy():0.0E-0}",
           0, ypos, 1, new Vector2(1.0f, 0),
           Size, new Vector3(1f, 1f, 1f));
@@ -78,6 +81,9 @@ namespace NBody
         colourVelocity,
         fixedSize);
 
+      if (renderOcTrees)
+        OctreeRenderer.RenderOcTrees(_camera);
+
       SwapBuffers();
     }
 
@@ -87,6 +93,8 @@ namespace NBody
 
       if (!Pause) {
         SimulationRenderer.UpdateFrame(_camera);
+        if (renderOcTrees)
+          OctreeRenderer.UpdateOcTree();
       }
     }
 
@@ -98,6 +106,7 @@ p: Pause simulation
 t: Show text info
 f: (point sized|blurry) stars
 c: Star velocities as colours
+o: (show|hide) octree structure
 Mouse left button + mouse move: move camera";
 
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -125,7 +134,10 @@ Mouse left button + mouse move: move camera";
           else WindowState = WindowState.Fullscreen;
           break;
         case Keys.F1:
-          renderHelp= !renderHelp;
+          renderHelp = !renderHelp;
+          break;
+        case Keys.O:
+          renderOcTrees = !renderOcTrees;
           break;
       }
     }

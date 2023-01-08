@@ -3,12 +3,13 @@ namespace NBody
   internal class OcTreeCache
   {
     private List<OcTree> OcTrees { get; } = new List<OcTree>();
-    public int Current { get; set; }
+    public IEnumerable<OcTree> ocTrees => OcTrees.Take(Count);
+    public int Count { get; set; }
     public OcTree GetNextOcTree(Vector location, double width)
     {
-      if (Current == OcTrees.Count)
+      if (Count == OcTrees.Count)
         OcTrees.Add(new OcTree(this));
-      var toReturn = OcTrees[Current++];
+      var toReturn = OcTrees[Count++];
       toReturn.Reset(location, width);
       return toReturn;
     }

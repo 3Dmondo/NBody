@@ -2,7 +2,6 @@ using System.Drawing;
 using System.Drawing.Text;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace NBody.Text
 {

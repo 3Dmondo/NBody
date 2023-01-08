@@ -38,14 +38,14 @@ namespace NBody
     /// <summary>
     /// The location of the center of the tree's bounds. 
     /// </summary>
-    private Vector Location;
+    public Vector Location { get; private set; }
 
     /// <summary>
     /// The width of the tree's bounds. 
     /// </summary>
     private double Width;
 
-    private double HalfWidth;
+    public double HalfWidth { get; private set; }
     private double QuarterWidth;
     private double WidthSquare;
 
