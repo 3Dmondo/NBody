@@ -9,6 +9,7 @@ uniform mat4 model_view_projection;
 uniform vec3 camera_pos;
 uniform int colourVelocity;
 uniform int blurry;
+uniform float MassMultiplier;
 
 const float minPointScale = 1.0;
 const float maxPointScale = 100.0;
@@ -29,7 +30,7 @@ void main(void)
   pointScale = max(pointScale, minPointScale);
   pointScale = min(pointScale, maxPointScale);
 
-  gl_PointSize = log(1e10 * mass) * pointScale;  
+  gl_PointSize = log(MassMultiplier * mass) * pointScale;  
 
   if (colourVelocity > 0)
   {

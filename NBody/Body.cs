@@ -41,6 +41,8 @@ namespace NBody
     private Vector K3L;
     private Vector K4L;
 
+    public bool TooClose { get; internal set; }
+
     public void ComputeK1()
     {
       PrevLocation = Location;

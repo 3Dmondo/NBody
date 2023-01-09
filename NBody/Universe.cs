@@ -2,7 +2,7 @@ namespace NBody
 {
   internal class Universe
   {
-    private const double MassMultiplier = 1e-9;
+    public const double MassMultiplier = 1e-10;
     public Body[] Bodies { get; private set; }
     public OcTreeCache OcTreeCache { get; private set; } = new OcTreeCache();
     public OcTree Tree { get; private set; }
@@ -92,6 +92,7 @@ namespace NBody
       OcTree tree = BuildOcTree(halfWidth);
       Parallel.ForEach(Bodies,b => {
         b.Interactions = 0;
+        b.TooClose = false;
         tree.Accelerate(b);
         });
       return tree;

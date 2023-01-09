@@ -17,7 +17,7 @@ namespace NBody
     /// The softening factor for the acceleration equation. This dampens the 
     /// the slingshot effect during close encounters of bodies. 
     /// </summary>
-    private const double Epsilon = 0.05; //700;
+    private const double Epsilon = 0.005; //700;
 
     /// <summary>
     /// The minimum width of a tree. Subtrees are not created when if their width 
@@ -130,7 +130,10 @@ namespace NBody
 
       if ((BodyCount == 1 && body != FirstBody) ||
           (WidthSquare < ToleranceSquare * dSquare)) {
-        var distance = Math.Sqrt(dSquare) + Epsilon;
+        var distance = Math.Sqrt(dSquare);
+        if (distance < Epsilon)
+          body.TooClose = true;
+        distance = distance + Epsilon;
         var acc = Mass / (distance * distance * distance);
         body.Acceleration += d * acc;
         body.PotentialEnergy += -body.Mass * Mass / distance;

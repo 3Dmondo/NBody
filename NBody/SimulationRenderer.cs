@@ -48,6 +48,7 @@ namespace NBody
       StarShader.SetVector3("camera_pos", camera.Position);
       StarShader.SetInt("colourVelocity", colourVelocity);
       StarShader.SetInt("blurry", blurry);
+      StarShader.SetFloat("MassMultiplier", 10f / (float)Universe.MassMultiplier);
 
       GL.BindVertexArray(_vertexArrayObject);
       GL.DrawArrays(PrimitiveType.Points, 0, _vertices.Length / 7);
