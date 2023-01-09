@@ -3,18 +3,22 @@ namespace NBody
   internal class Universe
   {
     public const double MassMultiplier = 1e-10;
+    private const int trajectoryUpdateFrequency = 10;
     public Body[] Bodies { get; private set; }
     public OcTreeCache OcTreeCache { get; private set; } = new OcTreeCache();
     public OcTree Tree { get; private set; }
+    private int frame = 0;
 
     public Universe(Body[] bodies)
     {
       Bodies = bodies;
-      InitVelocities();
+      SetInitialConditions();
     }
 
     public Vector Simulate()
     {
+      if (frame++ == trajectoryUpdateFrequency)
+        frame = 0;
       Tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK1());
       Tree = AccelerateBodies();
@@ -23,7 +27,7 @@ namespace NBody
       Parallel.ForEach(Bodies, b => b.ComputeK3());
       Tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => b.ComputeK4());
-      Parallel.ForEach(Bodies, b => b.Update());
+      Parallel.ForEach(Bodies, b => b.Update(frame == 0));
       return Bodies[0].Location;
     }
 
@@ -42,10 +46,13 @@ namespace NBody
       return Bodies.Select(b => b.Mass * (b.Velocity * b.Velocity) + b.PotentialEnergy).Sum() / MassMultiplier;
     }
 
-    private void InitVelocities()
+    private void SetInitialConditions()
     {
       var random = new Random();
       InitLocations(random);
+      foreach (var body in Bodies) {
+        body.InitTrajectory();
+      }
       var tree = AccelerateBodies();
       Parallel.ForEach(Bodies, b => SetBodyVelocity(b, random, tree));
     }
@@ -90,11 +97,11 @@ namespace NBody
     {
       double halfWidth = GetHalfWidth();
       OcTree tree = BuildOcTree(halfWidth);
-      Parallel.ForEach(Bodies,b => {
+      Parallel.ForEach(Bodies, b => {
         b.Interactions = 0;
         b.TooClose = false;
         tree.Accelerate(b);
-        });
+      });
       return tree;
     }
 

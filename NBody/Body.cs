@@ -3,6 +3,21 @@ namespace NBody
 
   internal class Body
   {
+    public const int TrajectoryLength = 100;
+
+    private Vector PrevLocation;
+    private Vector PrevVelocity;
+
+    private Vector K1V;
+    private Vector K2V;
+    private Vector K3V;
+    private Vector K4V;
+
+    private Vector K1L;
+    private Vector K2L;
+    private Vector K3L;
+    private Vector K4L;
+
     /// <summary>
     /// The spatial location of the body. 
     /// </summary>
@@ -28,18 +43,7 @@ namespace NBody
 
     public int Interactions;
 
-    private Vector PrevLocation;
-    private Vector PrevVelocity;
-
-    private Vector K1V;
-    private Vector K2V;
-    private Vector K3V;
-    private Vector K4V;
-
-    private Vector K1L;
-    private Vector K2L;
-    private Vector K3L;
-    private Vector K4L;
+    public CircularBuffer<Vector> Trajectory { get; private set; }
 
     public bool TooClose { get; internal set; }
 
@@ -84,16 +88,22 @@ namespace NBody
       Acceleration = Vector.Zero;
     }
 
-    public void Update()
+    public void Update(bool updateTrajectory)
     {
       Velocity = PrevVelocity + 1.0 / 6.0 * (K1V + 2.0 * K2V + 2.0 * K3V + K4V);
       Location = PrevLocation + 1.0 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L);
       Acceleration = Vector.Zero;
+      if (updateTrajectory)
+        Trajectory.Add(Location);
     }
 
+    internal void InitTrajectory()
+    {
+      Trajectory = new CircularBuffer<Vector>(TrajectoryLength, Location);
+    }
   }
 
-  internal class Body1
+  internal class LeapFrogIntegratorBody
   {
     /// <summary>
     /// The spatial location of the body. 
@@ -124,7 +134,7 @@ namespace NBody
       //https://en.wikipedia.org/wiki/Leapfrog_integration
       Location = Location + Velocity + 0.5 * PrevAcceleration;
       Velocity = Velocity + 0.5 * (PrevAcceleration + Acceleration);
-      PrevAcceleration= Acceleration;
+      PrevAcceleration = Acceleration;
       Acceleration = Vector.Zero;
     }
   }

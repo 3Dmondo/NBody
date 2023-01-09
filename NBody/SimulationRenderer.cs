@@ -10,6 +10,7 @@ namespace NBody
     private readonly float[] _vertices;
     private int _vertexBufferObject;
     private int _vertexArrayObject;
+    private const int SimulationStepsPerFrame = 1;
 
     public SimulationRenderer(Universe universe)
     {
@@ -58,7 +59,9 @@ namespace NBody
 
     public void UpdateFrame(Camera camera)
     {
-      var target = Universe.Simulate();
+      Vector target = new Vector();
+      for (int i = 0; i < SimulationStepsPerFrame; i++)
+        target = Universe.Simulate();
       camera.Target = new Vector3(
         (float)target.X,
         (float)target.Y,

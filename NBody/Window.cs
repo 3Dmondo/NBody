@@ -15,6 +15,7 @@ namespace NBody
     private TextRenderer TextRenderer;
     private SimulationRenderer SimulationRenderer;
     private OctreeRenderer OctreeRenderer;
+    private TrajectoryRenderer TrajectoryRenderer;
     private Universe Universe;
 
     private bool Button1Pressed;
@@ -24,6 +25,7 @@ namespace NBody
     private bool renderText = true;
     private bool renderHelp = true;
     private bool renderOcTrees = false;
+    private bool renderTrajectories = false;
 
     internal Window(
       GameWindowSettings gameWindowSettings,
@@ -43,6 +45,7 @@ namespace NBody
 
       SimulationRenderer = new SimulationRenderer(Universe);
       OctreeRenderer = new OctreeRenderer(Universe);
+      TrajectoryRenderer = new TrajectoryRenderer(Universe);
 
       if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         TextRenderer = new TextRenderer();
@@ -85,6 +88,9 @@ namespace NBody
       if (renderOcTrees)
         OctreeRenderer.RenderOcTrees(_camera);
 
+      if (renderTrajectories)
+        TrajectoryRenderer.Render(_camera);
+
       SwapBuffers();
     }
 
@@ -94,6 +100,8 @@ namespace NBody
 
       if (!Pause) {
         SimulationRenderer.UpdateFrame(_camera);
+        if (renderTrajectories)
+          TrajectoryRenderer.Update();
         if (renderOcTrees)
           OctreeRenderer.UpdateOcTree();
       }
@@ -104,10 +112,11 @@ namespace NBody
 F1: (show|hide) help
 F11: Full Screen
 p: Pause simulation
-t: Show text info
+i: Show text info
 b: (sharp|blurry) stars
 c: Star velocities as colours
 o: (show|hide) octree structure
+t: (show|hide) star trajectories
 Mouse left button + mouse move: move camera";
 
     protected override void OnKeyDown(KeyboardKeyEventArgs e)
@@ -126,7 +135,7 @@ Mouse left button + mouse move: move camera";
         case Keys.B:
           Blurry = Blurry > 0 ? 0 : 1;
           break;
-        case Keys.T:
+        case Keys.I:
           renderText = !renderText;
           break;
         case Keys.F11:
@@ -139,6 +148,9 @@ Mouse left button + mouse move: move camera";
           break;
         case Keys.O:
           renderOcTrees = !renderOcTrees;
+          break;
+        case Keys.T:
+          renderTrajectories = !renderTrajectories;
           break;
       }
     }

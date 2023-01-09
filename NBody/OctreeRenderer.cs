@@ -90,14 +90,11 @@ namespace NBody
 
       GL.BindVertexArray(VertexArrayObject);
       GL.DrawArraysInstanced(PrimitiveType.Lines, 0, Vertices.Length / 3, Count);
-      GL.BindVertexArray(0);
-      GL.EnableVertexAttribArray(0);
     }
 
     public void UpdateOcTree()
     {
       Count = FillInstanceData();
-      GL.EnableVertexAttribArray(1);
       GL.BindBuffer(BufferTarget.ArrayBuffer, InstanceVertexBufferObject[0]);
       GL.BufferData(BufferTarget.ArrayBuffer, InstanceData.Length * sizeof(float), InstanceData, BufferUsageHint.StreamDraw);
     }
