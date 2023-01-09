@@ -153,13 +153,12 @@ Mouse left button + mouse move: move camera";
     {
       base.OnMouseMove(e);
       if (Button1Pressed) {
-        var sideRotation = Matrix4.CreateFromAxisAngle(_camera.Up, -e.DeltaX * 0.001f);
-        var pitchRotation = Matrix4.CreateFromAxisAngle(Vector3.Cross(_camera.Position, _camera.Up), e.DeltaY * 0.001f);
+        var sideRotation = Matrix4.CreateFromAxisAngle(_camera.Up, -e.DeltaX * 0.002f);
+        var pitchRotation = Matrix4.CreateFromAxisAngle(Vector3.Cross(_camera.Position, _camera.Up), e.DeltaY * 0.002f);
         var transform = sideRotation * pitchRotation;
 
         var newPosition = new Vector4(_camera.Position, 1.0f) * transform;
         var newUp = new Vector4(_camera.Up, 1.0f) * transform;
-
 
         _camera.Position = newPosition.Xyz;
         _camera.Up = newUp.Xyz;
