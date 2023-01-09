@@ -4,56 +4,17 @@ namespace NBody
   {
     private readonly OcTreeCache ocTreeCache;
     private readonly OcTree[] subTrees = new OcTree[8];
-
-    /// <summary>
-    /// The tolerance of the mass grouping approximation in the simulation. A 
-    /// body is only accelerated when the ratio of the tree's width to the 
-    /// distance (from the tree's center of mass to the body) is less than this.
-    /// </summary>
     private const double Tolerance = 0.5;
     private const double ToleranceSquare = Tolerance * Tolerance;
-
-    /// <summary>
-    /// The softening factor for the acceleration equation. This dampens the 
-    /// the slingshot effect during close encounters of bodies. 
-    /// </summary>
-    private const double Epsilon = 0.005; //700;
-
-    /// <summary>
-    /// The minimum width of a tree. Subtrees are not created when if their width 
-    /// would be smaller than this value. 
-    /// </summary>
-    private const double MinimumWidth = 0;
-
-    /// <summary>
-    /// The number of bodies in the tree. 
-    /// </summary>
+    private const double Epsilon = 0.005; 
     public int BodyCount;
-
-    /// <summary>
-    /// The total mass of the bodies contained in the tree. 
-    /// </summary>
     public double Mass;
-
-    /// <summary>
-    /// The location of the center of the tree's bounds. 
-    /// </summary>
     public Vector Location { get; private set; }
-
-    /// <summary>
-    /// The width of the tree's bounds. 
-    /// </summary>
     private double Width;
-
     public double HalfWidth { get; private set; }
     private double QuarterWidth;
     private double WidthSquare;
-
-    /// <summary>
-    /// The location of the center of mass of the bodies contained in the tree. 
-    /// </summary>
     public Vector CenterOfMass { get; private set; }
-
     private Body FirstBody { get; set; }
 
     public OcTree(OcTreeCache ocTreeCache)
@@ -76,10 +37,6 @@ namespace NBody
       }
     }
 
-    /// <summary>
-    /// Adds a body to the tree and subtrees if appropriate. 
-    /// </summary>
-    /// <param name="body">The body to add to the tree.</param>
     public void Add(Body body)
     {
       CenterOfMass = (Mass * CenterOfMass + body.Mass * body.Location) / (Mass + body.Mass);

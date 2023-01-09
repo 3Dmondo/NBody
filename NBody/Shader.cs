@@ -1,3 +1,6 @@
+//copyright Opentk contributors
+//license https://github.com/opentk/LearnOpenTK/blob/master/LICENSE
+
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
