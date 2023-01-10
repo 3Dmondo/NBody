@@ -20,7 +20,7 @@ namespace NBody.Text
 
     public TextRenderer()
     {
-      TextShader = new Shader("Shaders/textShader.vert", "Shaders/textShader.frag");
+      TextShader = new Shader("NBody.Shaders.TextShader.vert", "NBody.Shaders.TextShader.frag");
 
       for (byte c = 32; c < 127; c++) {
         var character = ((char)c).ToString();

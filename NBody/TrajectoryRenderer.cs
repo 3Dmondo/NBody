@@ -20,7 +20,7 @@ namespace NBody
       GL.BindVertexArray(VertexArrayObject);
       GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
       GL.EnableVertexAttribArray(0);
-      Shader = new Shader("Shaders/trajectoryShader.vert", "Shaders/trajectoryShader.frag");
+      Shader = new Shader("NBody.Shaders.TrajectoryShader.vert", "NBody.Shaders.TrajectoryShader.frag");
       Shader.Use();
 
       Vertices = new float[Universe.Bodies.Length * Body.TrajectoryLength * 3];

@@ -73,7 +73,7 @@ namespace NBody
       GL.VertexAttribPointer(2, 4, VertexAttribPointerType.Float, false, 5 * sizeof(float), 4 * sizeof(float));
       GL.VertexAttribDivisor(2, 1);
 
-      Shader = new Shader("Shaders/cubeShader.vert", "Shaders/cubeShader.frag");
+      Shader = new Shader("NBody.Shaders.CubeShader.vert", "NBody.Shaders.CubeShader.frag");
       Shader.Use();
       Universe = universe;
     }

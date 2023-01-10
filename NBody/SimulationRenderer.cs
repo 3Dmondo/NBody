@@ -26,7 +26,7 @@ namespace NBody
       GL.EnableVertexAttribArray(1);
       GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 7 * sizeof(float), 6 * sizeof(float));
       GL.EnableVertexAttribArray(2);
-      StarShader = new Shader("Shaders/starShader.vert", "Shaders/starShader.frag");
+      StarShader = new Shader("NBody.Shaders.StarShader.vert", "NBody.Shaders.StarShader.frag");
     }
 
     public void RenderSimulation(
