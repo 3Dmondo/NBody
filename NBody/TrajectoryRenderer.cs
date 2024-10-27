@@ -48,9 +48,9 @@ namespace NBody
       int j = 0;
       foreach (var body in Universe.Bodies) {
         foreach (var location in body.Trajectory.GetItems()) {
-          Vertices[j++] = (float)location.X;
-          Vertices[j++] = (float)location.Y;
-          Vertices[j++] = (float)location.Z;
+          Vertices[j++] = (float)location.X();
+          Vertices[j++] = (float)location.Y();
+          Vertices[j++] = (float)location.Z();
         }
       }
       GL.BindBuffer(BufferTarget.ArrayBuffer, VertexBufferObject);

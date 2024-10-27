@@ -1,3 +1,4 @@
+using System.Runtime.Intrinsics;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 
@@ -107,9 +108,12 @@ namespace NBody
       }
       int j = 0;
       foreach (var ocTree in Universe.OcTreeCache.ocTrees) {
-        InstanceData[j++] = (float)ocTree.Location.X;
-        InstanceData[j++] = (float)ocTree.Location.Y;
-        InstanceData[j++] = (float)ocTree.Location.Z;
+
+        var narrowed = Vector256.Narrow(ocTree.Location.AsVector256(), Vector256<double>.Zero); 
+
+        InstanceData[j++] = narrowed.X();
+        InstanceData[j++] = narrowed.Y();
+        InstanceData[j++] = narrowed.Z();
         InstanceData[j++] = (float)ocTree.HalfWidth;
         InstanceData[j++] = ocTree.BodyCount;
       }

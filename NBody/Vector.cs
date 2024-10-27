@@ -1,4 +1,4 @@
-namespace NBody
+namespace NBody.old
 {
   public struct Vector //:
   //        IAdditionOperators<Vector, Vector, Vector>,
