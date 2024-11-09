@@ -13,16 +13,16 @@ var nativeWindowSettings = new NativeWindowSettings() {
 #if DEBUG
 var bodies = new Body[100];
 #else
-var bodies = new Body[10000];
+var bodies = new Body[25000];
 #endif
 
 var universe = new Universe(bodies);
 
 using var window = new Window(
   new GameWindowSettings {
-    IsMultiThreaded = false,
+    //IsMultiThreaded = false,
     UpdateFrequency = 0,
-    RenderFrequency = 0
+    //RenderFrequency = 0
   },
   nativeWindowSettings,
   universe); ;

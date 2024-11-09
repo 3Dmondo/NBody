@@ -1,3 +1,5 @@
+using OpenTK.Graphics.OpenGL;
+
 namespace NBody;
 
 
@@ -5,7 +7,44 @@ internal class Body
 {
   public const int TrajectoryLength = 100;
 
-  private Vector PrevLocation;
+  public Vector Position = Vector.Zero;
+
+  public Vector Velocity = Vector.Zero;
+
+  public Vector Acceleration;
+
+  public double PotentialEnergy;
+
+  public double Mass;
+
+  public int Interactions;
+
+  public double KineticEnergy => 0.5 * (Mass * Velocity).MagnitudeSquared() / Mass;
+
+  public CircularBuffer<Vector> Trajectory { get; private set; }
+
+  public bool TooClose { get; internal set; }
+
+  #region "LeapFrog"
+
+  public void ComputePositionAtHalfTimeStep()
+  {
+    Position += Velocity * 0.5;
+  }
+
+  public void ComputeVelocity(bool updateTrajectory)
+  {
+    Velocity += Acceleration;
+    Position += Velocity * 0.5;
+    if (updateTrajectory)
+      Trajectory.Add(Position);
+  }
+
+  #endregion
+
+  #region "runge kutta"
+
+  private Vector PrevPosition;
   private Vector PrevVelocity;
 
   private Vector K1V;
@@ -18,74 +57,49 @@ internal class Body
   private Vector K3L;
   private Vector K4L;
 
-  public Vector Location = Vector.Zero;
-
-  public Vector Velocity = Vector.Zero;
-
-  public Vector Acceleration;
-
-  public double PotentialEnergy;
-
-  public double Mass;
-
-  public int Interactions;
-
-  public CircularBuffer<Vector> Trajectory { get; private set; }
-
-  public bool TooClose { get; internal set; }
-
   public void ComputeK1()
   {
-    PrevLocation = Location;
+    PrevPosition = Position;
     PrevVelocity = Velocity;
     K1V = Acceleration;
     K1L = Velocity;
-    Velocity = PrevVelocity + Acceleration * 0.5;
-    Location = PrevLocation + Velocity * 0.5;
-    Acceleration = Vector.Zero;
-    PotentialEnergy = 0;
+    Velocity = PrevVelocity + K1V * 0.5;
+    Position = PrevPosition + K1L * 0.5;
   }
 
   public void ComputeK2()
   {
     K2V = Acceleration;
     K2L = Velocity;
-    Velocity = PrevVelocity + Acceleration * 0.5;
-    Location = PrevLocation + Velocity * 0.5;
-    Acceleration = Vector.Zero;
-    PotentialEnergy = 0;
+    Velocity = PrevVelocity + K2V * 0.5;
+    Position = PrevPosition + K2L * 0.5;
   }
 
   public void ComputeK3()
   {
     K3V = Acceleration;
     K3L = Velocity;
-    Velocity = PrevVelocity + Acceleration * 0.5;
-    Location = PrevLocation + Velocity * 0.5;
-    Acceleration = Vector.Zero;
-    PotentialEnergy = 0;
+    Velocity = PrevVelocity + K3V;
+    Position = PrevPosition + K3L;
   }
 
   public void ComputeK4()
   {
     K4V = Acceleration;
     K4L = Velocity;
-    Velocity = PrevVelocity + Acceleration;
-    Location = PrevLocation + Velocity;
-    Acceleration = Vector.Zero;
   }
 
-  public void Update(bool updateTrajectory)
+  public void UpdateRungeKutta4(bool updateTrajectory)
   {
     Velocity = PrevVelocity + 1.0 / 6.0 * (K1V + 2.0 * K2V + 2.0 * K3V + K4V);
-    Location = PrevLocation + 1.0 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L);
-    Acceleration = Vector.Zero;
+    Position = PrevPosition + 1.0 / 6.0 * (K1L + 2.0 * K2L + 2.0 * K3L + K4L);
     if (updateTrajectory)
-      Trajectory.Add(Location);
+      Trajectory.Add(Position);
   }
+  #endregion
 
   internal void InitTrajectory()
   {
-    Trajectory = new CircularBuffer<Vector>(TrajectoryLength, Location);
+    Trajectory = new CircularBuffer<Vector>(TrajectoryLength, Position);
   }
 }

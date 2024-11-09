@@ -61,7 +61,7 @@ internal class SimulationRenderer
   {
     Vector target = default;
     for (int i = 0; i < SimulationStepsPerFrame; i++)
-      target = Universe.Simulate();
+      target =Universe.SimulateLeapFrog();  /* Universe.SimulateRungeKutta4(); */
     camera.Target = new Vector3(
       (float)target.X(),
       (float)target.Y(),
@@ -73,7 +73,7 @@ internal class SimulationRenderer
   {
     var j = 0;
     for (int i = 0; i < Universe.Bodies.Length; i++) {
-      var bodyLocation = Universe.Bodies[i].Location;
+      var bodyLocation = Universe.Bodies[i].Position;
       var bodyVelocity = Universe.Bodies[i].Velocity.Unit();
       var narrowed = Vector256.Narrow(bodyLocation.AsVector256(), bodyVelocity.AsVector256());
 

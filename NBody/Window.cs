@@ -73,9 +73,9 @@ internal class Window : GameWindow
         $"Number of stars: {Universe.Bodies.Length}\n" +
         $"Number of octree cells: {Universe.OcTreeCache.Count}\n" +
         $"Average interactions per star: {Universe.Bodies.Select(b => b.Interactions).Average()}\n" +
-        $"Kinetic energy: {Universe.KineticEnergy():0.0E-0}\n" +
-        $"Potential energy: {Universe.PotentialEnergy():0.0E-0}\n" +
-        $"Total energy: {Universe.TotalEnergy():0.0E-0}",
+        $"Kinetic energy: {Universe.KineticEnergy():0.000E-0}\n" +
+        $"Potential energy: {Universe.PotentialEnergy():0.000E-0}\n" +
+        $"Total Energy: {Universe.TotalEnergy():0.000E-0}",
         0, ypos, 1, new Vector2(1.0f, 0),
         Size, new Vector3(1f, 1f, 1f));
     }

@@ -5,7 +5,7 @@ namespace NBody;
 internal class OcTree
 {
   private readonly OcTreeCache ocTreeCache;
-  private readonly OcTree[] subTrees = new OcTree[8];
+  private readonly OcTree?[] subTrees = new OcTree[8];
   private const double Tolerance = 0.5;
   private const double ToleranceSquare = Tolerance * Tolerance;
   private const double Epsilon = 0.005;
@@ -17,7 +17,7 @@ internal class OcTree
   private double QuarterWidth;
   private double WidthSquare;
   public Vector CenterOfMass { get; private set; }
-  private Body FirstBody { get; set; }
+  private Body? FirstBody { get; set; }
 
   public OcTree(OcTreeCache ocTreeCache)
   {
@@ -41,7 +41,7 @@ internal class OcTree
 
   public void Add(Body body)
   {
-    CenterOfMass = (Mass * CenterOfMass + body.Mass * body.Location) / (Mass + body.Mass);
+    CenterOfMass = (Mass * CenterOfMass + body.Mass * body.Position) / (Mass + body.Mass);
     Mass += body.Mass;
     BodyCount++;
     if (BodyCount == 1)
@@ -49,12 +49,9 @@ internal class OcTree
     else {
       AddToSubtree(body);
       if (BodyCount == 2)
-        AddToSubtree(FirstBody);
+        AddToSubtree(FirstBody!);
     }
   }
-
-  //private static readonly Vector256<long> One3 = Vector256.Create(1l, 1l, 1l, 0l);
-  //private static readonly Vector256<long> IndexBase = Vector256.Create(1l, 2l, 4l, 0l);
 
   private void AddToSubtree(Body body)
   {
@@ -62,18 +59,18 @@ internal class OcTree
 
     int ii = 1, jj = 2, kk = 4;
     double i = 1.0, j = 1.0, k = 1.0;
-    
-    if (body.Location.X() < Location.X()) {
+
+    if (body.Position.X() < Location.X()) {
       ii = 0;
       i = -1.0;
     }
-    
-    if (body.Location.Y() < Location.Y()) {
+
+    if (body.Position.Y() < Location.Y()) {
       jj = 0;
       j = -1.0;
     }
-    
-    if (body.Location.Z() < Location.Z()) {
+
+    if (body.Position.Z() < Location.Z()) {
       kk = 0;
       k = -1.0;
     }
@@ -93,28 +90,29 @@ internal class OcTree
     var subtreeLocation = Location + QuarterWidth * shiftOriginal;
     if (subTrees[subtreeIndex] == null)
       subTrees[subtreeIndex] = ocTreeCache.GetNextOcTree(subtreeLocation, subtreeWidth);
-    subTrees[subtreeIndex].Add(body);
+    subTrees[subtreeIndex]!.Add(body);
   }
 
   public void Accelerate(Body body)
   {
-    var d = CenterOfMass - body.Location;
+    var d = CenterOfMass - body.Position;
     var dSquare = d.MagnitudeSquared();
 
     if ((BodyCount == 1 && body != FirstBody) ||
         (WidthSquare < ToleranceSquare * dSquare)) {
       var distance = Math.Sqrt(dSquare);
-      if (distance < Epsilon)
+      if (distance < Epsilon) {
         body.TooClose = true;
-      distance = distance + Epsilon;
+        distance = distance + Epsilon;
+      }
       var acc = Mass / (distance * distance * distance);
       body.Acceleration += d * acc;
-      body.PotentialEnergy += -body.Mass * Mass / distance;
+      body.PotentialEnergy += -0.5 * body.Mass * Mass / distance;
       body.Interactions++;
     } else {
       for (int i = 0; i < 8; i++)
         if (null != subTrees[i]) {
-          subTrees[i].Accelerate(body);
+          subTrees[i]!.Accelerate(body);
         }
     }
   }
