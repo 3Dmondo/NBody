@@ -1,4 +1,3 @@
-global using Vector = System.Numerics.Vector<double>;
 using NBody;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;

@@ -1,4 +1,4 @@
-using OpenTK.Graphics.OpenGL;
+using System.Runtime.Intrinsics;
 
 namespace NBody;
 
@@ -7,11 +7,11 @@ internal class Body
 {
   public const int TrajectoryLength = 100;
 
-  public Vector Position = Vector.Zero;
+  public Vector256<double> Position = Vector256<double>.Zero;
 
-  public Vector Velocity = Vector.Zero;
+  public Vector256<double> Velocity = Vector256<double>.Zero;
 
-  public Vector Acceleration;
+  public Vector256<double> Acceleration;
 
   public double PotentialEnergy;
 
@@ -21,7 +21,7 @@ internal class Body
 
   public double KineticEnergy => 0.5 * (Mass * Velocity).MagnitudeSquared() / Mass;
 
-  public CircularBuffer<Vector> Trajectory { get; private set; }
+  public CircularBuffer<Vector256<double>> Trajectory { get; private set; }
 
   public bool TooClose { get; internal set; }
 
@@ -44,18 +44,18 @@ internal class Body
 
   #region "runge kutta"
 
-  private Vector PrevPosition;
-  private Vector PrevVelocity;
+  private Vector256<double> PrevPosition;
+  private Vector256<double> PrevVelocity;
 
-  private Vector K1V;
-  private Vector K2V;
-  private Vector K3V;
-  private Vector K4V;
+  private Vector256<double> K1V;
+  private Vector256<double> K2V;
+  private Vector256<double> K3V;
+  private Vector256<double> K4V;
 
-  private Vector K1L;
-  private Vector K2L;
-  private Vector K3L;
-  private Vector K4L;
+  private Vector256<double> K1L;
+  private Vector256<double> K2L;
+  private Vector256<double> K3L;
+  private Vector256<double> K4L;
 
   public void ComputeK1()
   {
@@ -100,6 +100,6 @@ internal class Body
 
   internal void InitTrajectory()
   {
-    Trajectory = new CircularBuffer<Vector>(TrajectoryLength, Position);
+    Trajectory = new CircularBuffer<Vector256<double>>(TrajectoryLength, Position);
   }
 }

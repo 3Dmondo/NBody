@@ -109,11 +109,11 @@ namespace NBody
       int j = 0;
       foreach (var ocTree in Universe.OcTreeCache.ocTrees) {
 
-        var narrowed = Vector256.Narrow(ocTree.Location.AsVector256(), Vector256<double>.Zero); 
+        var narrowed = Vector128.Narrow(ocTree.Center.GetLower(),ocTree.Center.GetUpper()); 
 
-        InstanceData[j++] = narrowed.X();
-        InstanceData[j++] = narrowed.Y();
-        InstanceData[j++] = narrowed.Z();
+        InstanceData[j++] = narrowed[0];
+        InstanceData[j++] = narrowed[1];
+        InstanceData[j++] = narrowed[2];
         InstanceData[j++] = (float)ocTree.HalfWidth;
         InstanceData[j++] = ocTree.BodyCount;
       }

@@ -71,11 +71,12 @@ namespace NBody.old
       };
     }
 
-    public static double operator *(Vector left, Vector right)
+    public static Vector operator *(Vector left, Vector right)
     {
-      return left.X * right.X +
-             left.Y * right.Y +
-             left.Z * right.Z;
+      return new Vector(
+        left.X * right.X,
+        left.Y * right.Y,
+        left.Z * right.Z);
     }
 
     public static Vector operator *(Vector left, double right)
@@ -99,6 +100,13 @@ namespace NBody.old
         Y = left.Z * right.X - left.X * right.Z,
         Z = left.X * right.Y - left.Y * right.X,
       };
+    }
+
+    public static double Dot(Vector left, Vector right)
+    {
+      return left.X * right.X +
+             left.Y * right.Y +
+             left.Z * right.Z;
     }
 
     public double Magnitude()

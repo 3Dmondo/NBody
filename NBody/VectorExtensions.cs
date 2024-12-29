@@ -1,45 +1,48 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics;
 namespace NBody;
 
-internal static class VectorExtensions
+public static class VectorExtensions
 {
-  static readonly Vector256<long> indices1 = Vector256.Create(1L, 2L, 0L, 3L);
-  static readonly Vector256<long> indices2 = Vector256.Create(2L, 0L, 1L, 3L);
+  static readonly Vector256<long> YZXW = Vector256.Create(1L, 2L, 0L, 3L);
+  static readonly Vector256<long> ZXYW = Vector256.Create(2L, 0L, 1L, 3L);
 
-  public static Vector Cross(this Vector vector1, Vector vector2)
+  public static Vector256<double> Cross(this Vector256<double> vector1, Vector256<double> vector2)
   {
-    var v1 = vector1.AsVector256();
-    var v2 = vector2.AsVector256();
-    var result = (Vector256.Shuffle(v1, indices1) * Vector256.Shuffle(v2, indices2) -
-            Vector256.Shuffle(v1, indices2) * Vector256.Shuffle(v2, indices1)).AsVector();
+    var v1 = vector1;
+    var v2 = vector2;
+    var tmp = -Vector256.Shuffle(v1, ZXYW) * Vector256.Shuffle(v2, YZXW);
+
+    var result = Vector256.FusedMultiplyAdd(
+      Vector256.Shuffle(v1, YZXW),
+      Vector256.Shuffle(v2, ZXYW),
+      tmp);
     return result;
   }
 
-  public static double Dot(this Vector vector1, Vector vector2)
+  public static double MagnitudeSquared(this Vector256<double> vector)
   {
-    return Vector256.Dot(vector1.AsVector256(), vector2.AsVector256());
+    return Vector256.Dot(vector, vector);
   }
 
-  public static double MagnitudeSquared(this Vector vector)
-  {
-    return vector.Dot(vector);
-  }
-
-  public static double Magnitude(this Vector vector)
+  public static double Magnitude(this Vector256<double> vector)
   {
     return Math.Sqrt(vector.MagnitudeSquared());
   }
 
-  public static Vector Unit(this Vector vector) => vector / vector.Magnitude();
+  public static Vector256<double> Unit(this Vector256<double> vector) => vector / vector.Magnitude();
 
-  public static double X(this Vector vector) => vector[0];
-  public static double Y(this Vector vector) => vector[1];
-  public static double Z(this Vector vector) => vector[2];
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static double X(this Vector256<double> vector) => vector[0];
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static double Y(this Vector256<double> vector) => vector[1];
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  public static double Z(this Vector256<double> vector) => vector[2];
 
   public static float X(this Vector256<float> vector) => vector[0];
   public static float Y(this Vector256<float> vector) => vector[1];
   public static float Z(this Vector256<float> vector) => vector[2];
-                
+
   public static float VX(this Vector256<float> vector) => vector[4];
   public static float VY(this Vector256<float> vector) => vector[5];
   public static float VZ(this Vector256<float> vector) => vector[6];
