@@ -1,28 +1,69 @@
 using Evergine.Bindings.WebGPU;
 using static Evergine.Bindings.WebGPU.WebGPUNative;
+using NBody.Simulation;
+using Microsoft.JSInterop;
+using System.Numerics;
 
 namespace NBody.Web.Pages;
 
 public partial class Home
 {
-  public unsafe void Run()
+  private WGPUDevice _device;
+  private WGPUQueue _queue;
+  private WGPUSwapChain _swapChain;
+  private Universe _universe = default!;
+  private float[] _particleData = default!; // 8 floats per body (pos.xyz, mass, vel.xyz, pad)
+  private bool _initialized;
+  private WGPUBuffer _particleBuffer;
+  private WGPURenderPipeline _particlePipeline;
+  private uint _bodyCount;
+  private WGPUBuffer _sceneUniformBuffer;
+  private WGPUBindGroupLayout _bindGroupLayout;
+  private WGPUBindGroup _bindGroup;
+  private Matrix4x4 _viewProj; // simple scaling camera for now
+  private float _sceneScale = 1f;
+
+  [JSInvokable]
+  public static Task Tick() => Instance?.AdvanceAndRenderFrame() ?? Task.CompletedTask;
+  private static Home? Instance;
+  public Home() { Instance = this; }
+
+  private Task AdvanceAndRenderFrame()
   {
-    // Based on: https://github.com/seyhajin/webgpu-wasm-c/blob/f8d718cf44d9ab3f19319efb27c87c645c46fc15/main.c
-    // The main difference is instead of having a static state, we have added local variables on demand
-    var device = emscripten_webgpu_get_device();
-    var queue = wgpuDeviceGetQueue(device);
+    if (!_initialized) {
+      try {
+        InitializeWebGPU();
+        InitSimulation();
+        CreateParticleResources();
+        _initialized = true;
+      } catch (Exception ex) {
+        Console.WriteLine($"Initialization error: {ex}");
+        return Task.CompletedTask;
+      }
+    }
+
+    _universe.Simulate();
+    _universe.CopyParticleAttributes8(_particleData);
+    UpdateSceneUniform();
+    UpdateParticleBuffer();
+    DrawFrame();
+    return Task.CompletedTask;
+  }
+
+  private unsafe void InitializeWebGPU()
+  {
+    _device = emscripten_webgpu_get_device();
+    _queue = wgpuDeviceGetQueue(_device);
     double width, height;
     emscripten_get_element_css_size("canvas".ToPointer(), &width, &height);
+
     var surfaceDescriptorFromCanvasHTMLSelector = new WGPUSurfaceDescriptorFromCanvasHTMLSelector() {
-      chain = new WGPUChainedStruct() {
-        sType = WGPUSType.SurfaceDescriptorFromCanvasHTMLSelector,
-      },
+      chain = new WGPUChainedStruct() { sType = WGPUSType.SurfaceDescriptorFromCanvasHTMLSelector },
       selector = "canvas".ToPointer(),
     };
-    var surfaceDescriptor = new WGPUSurfaceDescriptor() {
-      nextInChain = (WGPUChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector,
-    };
+    var surfaceDescriptor = new WGPUSurfaceDescriptor() { nextInChain = (WGPUChainedStruct*)&surfaceDescriptorFromCanvasHTMLSelector };
     var surface = wgpuInstanceCreateSurface(instance: IntPtr.Zero, &surfaceDescriptor);
+
     var swapChainDescriptor = new WGPUSwapChainDescriptor() {
       usage = WGPUTextureUsage.RenderAttachment,
       format = WGPUTextureFormat.BGRA8Unorm,
@@ -30,273 +71,242 @@ public partial class Home
       height = (uint)height,
       presentMode = WGPUPresentMode.Fifo,
     };
-    var swapChain = wgpuDeviceCreateSwapChain(device, surface, &swapChainDescriptor);
-    var triangleWGSL = @"
-// attribute/uniform decls
+    _swapChain = wgpuDeviceCreateSwapChain(_device, surface, &swapChainDescriptor);
+  }
 
-struct VertexIn {
-    @location(0) aPos : vec2<f32>,
-    @location(1) aCol : vec3<f32>,
-};
-struct VertexOut {
-    @location(0) vCol : vec3<f32>,
-    @builtin(position) Position : vec4<f32>,
-};
-struct Rotation {
-    @location(0) degs : f32,
-};
-@group(0) @binding(0) var<uniform> uRot : Rotation;
+  private void InitSimulation()
+  {
+    _bodyCount = 512; // initial WASM-friendly count
+    var bodies = new Body[_bodyCount];
+    _universe = new Universe(bodies);
+    _particleData = new float[_bodyCount * 8];
+    _universe.CopyParticleAttributes8(_particleData);
+    ComputeInitialViewProjection();
+  }
 
-// vertex shader
-
-@vertex
-fn vs_main(input : VertexIn) -> VertexOut {
-    var rads : f32 = radians(uRot.degs);
-    var cosA : f32 = cos(rads);
-    var sinA : f32 = sin(rads);
-    var rot : mat3x3<f32> = mat3x3<f32>(
-        vec3<f32>( cosA, sinA, 0.0),
-        vec3<f32>(-sinA, cosA, 0.0),
-        vec3<f32>( 0.0,  0.0,  1.0));
-    var output : VertexOut;
-    output.Position = vec4<f32>(rot * vec3<f32>(input.aPos, 1.0), 1.0);
-    output.vCol = input.aCol;
-    return output;
-}
-
-// fragment shader
-
-@fragment
-fn fs_main(@location(0) vCol : vec3<f32>) -> @location(0) vec4<f32> {
-    return vec4<f32>(vCol, 1.0);
-}
-";
-    var shader_triangle = create_shader(triangleWGSL, label: default, device);
-    WGPUVertexAttribute* vertex_attrib = stackalloc WGPUVertexAttribute[]
+  private void ComputeInitialViewProjection()
+  {
+    float maxAbs = 1f;
+    for (int i = 0; i < _particleData.Length; i += 8)
     {
-              // position: x, y
-              new WGPUVertexAttribute()
-              {
-                  format = WGPUVertexFormat.Float32x2,
-                  offset = 0,
-                  shaderLocation = 0,
-              },
-              // color: r, g, b
-              new WGPUVertexAttribute()
-              {
-                  format = WGPUVertexFormat.Float32x3,
-                  offset = 2 * sizeof(float),
-                  shaderLocation = 1,
-              }
-          };
-    WGPUVertexBufferLayout vertex_buffer_layout = new WGPUVertexBufferLayout {
-      arrayStride = 5 * sizeof(float),
-      attributeCount = 2,
-      attributes = vertex_attrib,
+      float x = _particleData[i];
+      float y = _particleData[i + 1];
+      float z = _particleData[i + 2];
+      maxAbs = Math.Max(maxAbs, Math.Max(Math.Max(Math.Abs(x), Math.Abs(y)), Math.Abs(z)));
+    }
+    maxAbs *= 1.1f;
+    _sceneScale = maxAbs > 0 ? 1f / maxAbs : 1f;
+    _viewProj = Matrix4x4.CreateScale(_sceneScale, _sceneScale, _sceneScale);
+  }
+
+  private unsafe void CreateParticleResources()
+  {
+    // Vertex buffer
+    ulong sizeBytes = (ulong)(_particleData.Length * sizeof(float));
+    var bufferDesc = new WGPUBufferDescriptor() {
+      size = sizeBytes,
+      usage = WGPUBufferUsage.CopyDst | WGPUBufferUsage.Vertex,
+      mappedAtCreation = false,
+    };
+    _particleBuffer = wgpuDeviceCreateBuffer(_device, &bufferDesc);
+
+    // Uniform buffer (viewProj matrix)
+    var sceneDesc = new WGPUBufferDescriptor() {
+      size = 64,
+      usage = WGPUBufferUsage.CopyDst | WGPUBufferUsage.Uniform,
+      mappedAtCreation = false,
+    };
+    _sceneUniformBuffer = wgpuDeviceCreateBuffer(_device, &sceneDesc);
+    UpdateSceneUniform();
+
+    // Bind group layout
+    var bgleEntry = new WGPUBindGroupLayoutEntry() {
+      binding = 0,
+      visibility = WGPUShaderStage.Vertex,
+      buffer = new WGPUBufferBindingLayout() { type = WGPUBufferBindingType.Uniform },
+    };
+    var bglDesc = new WGPUBindGroupLayoutDescriptor() { entryCount = 1, entries = &bgleEntry };
+    _bindGroupLayout = wgpuDeviceCreateBindGroupLayout(_device, &bglDesc);
+
+    string wgsl = 
+      """
+      struct Scene {
+        viewProj : mat4x4<f32>,
+      };
+      @group(0) @binding(0) var<uniform> uScene : Scene;
+      
+      struct VSOut {
+        @builtin(position) pos : vec4<f32>,
+        @location(0) col    : vec3<f32>,
+      };
+      
+      // Attributes: location(0)=pos.xyz, location(1)=mass, location(2)=vel.xyz
+      @vertex
+      fn vs_main(
+          @location(0) inPos  : vec3<f32>,
+          @location(1) inMass : f32,
+          @location(2) inVel  : vec3<f32>) -> VSOut {
+          var o : VSOut;
+          o.pos = uScene.viewProj * vec4<f32>(inPos, 1.0);
+          let mag = length(inVel);
+          if (mag < 1e-5) {
+              o.col = vec3<f32>(1.0, 1.0, 1.0);
+          } else {
+              let v = normalize(inVel);
+              // Map [-1,1] to [0,1]
+              o.col = 0.5 + 0.5 * v;
+          }
+          return o;
+      }
+      
+      @fragment
+      fn fs_main(@location(0) col : vec3<f32>) -> @location(0) vec4<f32> {
+          return vec4<f32>(col, 1.0);
+      }
+      """;
+
+    var shader = CreateShaderModule(wgsl, _device);
+
+    // Vertex layout
+    WGPUVertexAttribute* attrs = stackalloc WGPUVertexAttribute[3];
+    attrs[0] = new WGPUVertexAttribute { format = WGPUVertexFormat.Float32x3, offset = 0, shaderLocation = 0 };
+    attrs[1] = new WGPUVertexAttribute { format = WGPUVertexFormat.Float32, offset = 12, shaderLocation = 1 };
+    attrs[2] = new WGPUVertexAttribute { format = WGPUVertexFormat.Float32x3, offset = 16, shaderLocation = 2 };
+    var vbl = new WGPUVertexBufferLayout {
+      arrayStride = 32,
+      attributeCount = 3,
+      attributes = attrs,
+      stepMode = WGPUVertexStepMode.Vertex
     };
 
-    // describe pipeline layout
-    var entries = stackalloc WGPUBindGroupLayoutEntry[]
-    {
-              new WGPUBindGroupLayoutEntry()
-              {
-                  binding = 0,
-                  visibility = WGPUShaderStage.Vertex,
-                  // buffer binding layout
-                  buffer = new WGPUBufferBindingLayout()
-                  {
-                      type = WGPUBufferBindingType.Uniform,
-                  },
-              },
-          };
-    var bindGroupLayoutDescriptor = new WGPUBindGroupLayoutDescriptor() {
-      entryCount = 1,
-      // bind group layout entry
-      entries = entries,
+    var vertexState = new WGPUVertexState {
+      module = shader,
+      entryPoint = "vs_main".ToPointer(),
+      bufferCount = 1,
+      buffers = &vbl
     };
-    WGPUBindGroupLayout bindgroup_layout = wgpuDeviceCreateBindGroupLayout(device, &bindGroupLayoutDescriptor);
-    var pipelineLayoutDescriptor = new WGPUPipelineLayoutDescriptor() {
-      bindGroupLayoutCount = 1,
-      bindGroupLayouts = &bindgroup_layout,
-    };
-    WGPUPipelineLayout pipeline_layout = wgpuDeviceCreatePipelineLayout(device, &pipelineLayoutDescriptor);
-    // create pipeline
-    var blendState = new WGPUBlendState() {
-      color = new WGPUBlendComponent() {
-        operation = WGPUBlendOperation.Add,
+
+    var blend = new WGPUBlendState {
+      color = new WGPUBlendComponent {
         srcFactor = WGPUBlendFactor.One,
         dstFactor = WGPUBlendFactor.One,
+        operation = WGPUBlendOperation.Add
       },
-      alpha = {
-                  operation = WGPUBlendOperation.Add,
-                  srcFactor = WGPUBlendFactor.One,
-                  dstFactor = WGPUBlendFactor.One,
-              },
+      alpha = new WGPUBlendComponent {
+        srcFactor = WGPUBlendFactor.One,
+        dstFactor = WGPUBlendFactor.One,
+        operation = WGPUBlendOperation.Add
+      }
     };
-    var targetState = new WGPUColorTargetState() {
+
+    var target = new WGPUColorTargetState {
       format = WGPUTextureFormat.BGRA8Unorm,
-      writeMask = WGPUColorWriteMask.All,
-      // blend state
-      blend = &blendState,
+      blend = &blend,
+      writeMask = WGPUColorWriteMask.All
     };
-    var fragmentState = new WGPUFragmentState() {
-      module = shader_triangle,
+
+    var fragment = new WGPUFragmentState {
+      module = shader,
       entryPoint = "fs_main".ToPointer(),
       targetCount = 1,
-      // color target state
-      targets = &targetState,
+      targets = &target
     };
-    var renderPipelineDescriptor = new WGPURenderPipelineDescriptor() {
-      // pipeline layout
-      layout = pipeline_layout,
-      // vertex state
-      vertex = new WGPUVertexState() {
-        module = shader_triangle,
-        entryPoint = "vs_main".ToPointer(),
-        bufferCount = 1,
-        buffers = &vertex_buffer_layout,
-      },
-      // primitive state
-      primitive = new WGPUPrimitiveState() {
+
+    // Pipeline layout
+    var layout = _bindGroupLayout; // take address via local
+    var layoutDesc = new WGPUPipelineLayoutDescriptor() {
+      bindGroupLayoutCount = 1,
+      bindGroupLayouts = &layout
+    };
+    var pipelineLayout = wgpuDeviceCreatePipelineLayout(_device, &layoutDesc);
+
+    var rpDesc = new WGPURenderPipelineDescriptor {
+      layout = pipelineLayout,
+      vertex = vertexState,
+      primitive = new WGPUPrimitiveState {
+        topology = WGPUPrimitiveTopology.PointList,
         frontFace = WGPUFrontFace.CCW,
-        cullMode = WGPUCullMode.None,
-        topology = WGPUPrimitiveTopology.TriangleList,
-        stripIndexFormat = WGPUIndexFormat.Undefined,
+        cullMode = WGPUCullMode.None
       },
-      // fragment state
-      fragment = &fragmentState,
-      // multi-sampling state
-      multisample = new WGPUMultisampleState() {
-        count = 1,
-        mask = 0xFFFFFFFF,
-        alphaToCoverageEnabled = false,
-      },
-      // depth-stencil state
-      depthStencil = null,
+      fragment = &fragment,
+      multisample = new WGPUMultisampleState { count = 1, mask = 0xFFFFFFFF, alphaToCoverageEnabled = false },
+      depthStencil = null
     };
-    var pipeline = wgpuDeviceCreateRenderPipeline(device, &renderPipelineDescriptor);
-    wgpuPipelineLayoutRelease(pipeline_layout);
-    wgpuShaderModuleRelease(shader_triangle);
-    // create the vertex buffer (x, y, r, g, b) and index buffer
-    var vertex_data = stackalloc float[]
+
+    _particlePipeline = wgpuDeviceCreateRenderPipeline(_device, &rpDesc);
+
+    // Bind group
+    var bgEntry = new WGPUBindGroupEntry { binding = 0, buffer = _sceneUniformBuffer, offset = 0, size = 64 };
+    var bgDesc = new WGPUBindGroupDescriptor { layout = _bindGroupLayout, entryCount = 1, entries = &bgEntry };
+    _bindGroup = wgpuDeviceCreateBindGroup(_device, &bgDesc);
+
+    wgpuShaderModuleRelease(shader);
+    wgpuPipelineLayoutRelease(pipelineLayout);
+  }
+
+  private unsafe void UpdateSceneUniform()
+  {
+    Span<float> m = stackalloc float[16];
+    m[0] = _viewProj.M11; m[1] = _viewProj.M12; m[2] = _viewProj.M13; m[3] = _viewProj.M14;
+    m[4] = _viewProj.M21; m[5] = _viewProj.M22; m[6] = _viewProj.M23; m[7] = _viewProj.M24;
+    m[8] = _viewProj.M31; m[9] = _viewProj.M32; m[10] = _viewProj.M33; m[11] = _viewProj.M34;
+    m[12] = _viewProj.M41; m[13] = _viewProj.M42; m[14] = _viewProj.M43; m[15] = _viewProj.M44;
+    fixed (float* ptr = m)
     {
-              // x, y          // r, g, b
-             -0.5f, -0.5f,     1.0f, 0.0f, 0.0f, // bottom-left
-              0.5f, -0.5f,     0.0f, 1.0f, 0.0f, // bottom-right
-              0.5f,  0.5f,     0.0f, 0.0f, 1.0f, // top-right
-             -0.5f,  0.5f,     1.0f, 1.0f, 0.0f, // top-left
-          };
-    var index_data = stackalloc ushort[]
+      wgpuQueueWriteBuffer(_queue, _sceneUniformBuffer, 0, ptr, 64);
+    }
+  }
+
+  private unsafe void UpdateParticleBuffer()
+  {
+    fixed (float* p = _particleData)
     {
-              0, 1, 2,
-              0, 2, 3,
-          };
-    var vbuffer = create_buffer(vertex_data, 5 * 4 * sizeof(float), WGPUBufferUsage.Vertex, device, queue);
-    var ibuffer = create_buffer(index_data, 3 * 2 * sizeof(ushort), WGPUBufferUsage.Index, device, queue);
-    // create the uniform bind group
-    float rot = 45;
-    var ubuffer = create_buffer(&rot, sizeof(float), WGPUBufferUsage.Uniform, device, queue);
-    var bindGroupEntry = new WGPUBindGroupEntry() {
-      binding = 0,
-      offset = 0,
-      buffer = ubuffer,
-      size = sizeof(float),
-    };
-    var bindGroupDescriptor = new WGPUBindGroupDescriptor() {
-      // We reuse the layout created earlier because wgpuRenderPipelineGetBindGroupLayout(pipeline, 0) does not work
-      layout = bindgroup_layout,
-      entryCount = 1,
-      // bind group entry
-      entries = &bindGroupEntry,
-    };
-    var bindgroup = wgpuDeviceCreateBindGroup(device, &bindGroupDescriptor);
-    wgpuBindGroupLayoutRelease(bindgroup_layout);
-    draw(swapChain, device, queue, pipeline, bindgroup, vbuffer, ibuffer);
+      uint sizeBytes = (uint)(_particleData.Length * sizeof(float));
+      wgpuQueueWriteBuffer(_queue, _particleBuffer, 0, p, sizeBytes);
+    }
   }
 
-  private unsafe WGPUBuffer create_buffer(void* data, uint size, WGPUBufferUsage usage, WGPUDevice device, WGPUQueue queue)
+  private unsafe void DrawFrame()
   {
-    var bufferDescriptor = new WGPUBufferDescriptor() {
-      usage = WGPUBufferUsage.CopyDst | usage,
-      size = size,
-    };
-    WGPUBuffer buffer = wgpuDeviceCreateBuffer(device, &bufferDescriptor);
-    wgpuQueueWriteBuffer(queue, buffer, 0u, data, size);
+    var backbufferView = wgpuSwapChainGetCurrentTextureView(_swapChain);
+    if (backbufferView == IntPtr.Zero)
+      return;
 
-    return buffer;
-  }
-
-  private unsafe WGPUShaderModule create_shader(string code, string? label, WGPUDevice device)
-  {
-    var shaderModuleWGSLDescriptor = new WGPUShaderModuleWGSLDescriptor {
-      chain = new WGPUChainedStruct() {
-        sType = WGPUSType.ShaderModuleWGSLDescriptor,
-      },
-      source = code.ToPointer(),
-    };
-    var shaderModuleDescriptor = new WGPUShaderModuleDescriptor() {
-      nextInChain = (WGPUChainedStruct*)&shaderModuleWGSLDescriptor,
-      label = label == default ? null : label.ToPointer(),
-    };
-    var shaderModule = wgpuDeviceCreateShaderModule(device, &shaderModuleDescriptor);
-
-    return shaderModule;
-  }
-
-  private unsafe void draw(
-      WGPUSwapChain swapchain,
-      WGPUDevice device,
-      WGPUQueue queue,
-      WGPURenderPipeline pipeline,
-      WGPUBindGroup bindgroup,
-      WGPUBuffer vbuffer,
-      WGPUBuffer ibuffer)
-  {
-    // create texture view
-    WGPUTextureView back_buffer = wgpuSwapChainGetCurrentTextureView(swapchain);
-
-    // create command encoder
-    WGPUCommandEncoder cmd_encoder = wgpuDeviceCreateCommandEncoder(device, null);
-
-    // begin render pass
     var colorAttachment = new WGPURenderPassColorAttachment() {
-      view = back_buffer,
+      view = backbufferView,
       loadOp = WGPULoadOp.Clear,
       storeOp = WGPUStoreOp.Store,
-      clearValue = new WGPUColor() {
-        r = 0.2f,
-        g = 0.2f,
-        b = 0.3f,
-        a = 1.0f,
-      },
+      clearValue = new WGPUColor { r = 0.02, g = 0.02, b = 0.05, a = 1.0 },
     };
-    var renderPassDescriptor = new WGPURenderPassDescriptor() {
-      // color attachments
+    var passDesc = new WGPURenderPassDescriptor {
       colorAttachmentCount = 1,
-      colorAttachments = &colorAttachment,
+      colorAttachments = &colorAttachment
     };
-    WGPURenderPassEncoder render_pass = wgpuCommandEncoderBeginRenderPass(cmd_encoder, &renderPassDescriptor);
 
-    // draw quad (comment these five lines to simply clear the screen)
-    wgpuRenderPassEncoderSetPipeline(render_pass, pipeline);
-    wgpuRenderPassEncoderSetBindGroup(render_pass, 0, bindgroup, 0, (uint*)0);
-    wgpuRenderPassEncoderSetVertexBuffer(render_pass, 0, vbuffer, 0, WGPU_WHOLE_SIZE);
-    wgpuRenderPassEncoderSetIndexBuffer(render_pass, ibuffer, WGPUIndexFormat.Uint16, 0, WGPU_WHOLE_SIZE);
-    wgpuRenderPassEncoderDrawIndexed(render_pass, 6, 1, 0, 0, 0);
+    var encoder = wgpuDeviceCreateCommandEncoder(_device, null);
+    var pass = wgpuCommandEncoderBeginRenderPass(encoder, &passDesc);
+    wgpuRenderPassEncoderSetPipeline(pass, _particlePipeline);
+    wgpuRenderPassEncoderSetBindGroup(pass, 0, _bindGroup, 0, (uint*)0);
+    wgpuRenderPassEncoderSetVertexBuffer(pass, 0, _particleBuffer, 0, WGPU_WHOLE_SIZE);
+    wgpuRenderPassEncoderDraw(pass, _bodyCount, 1, 0, 0);
+    wgpuRenderPassEncoderEnd(pass);
 
-    // end render pass
-    wgpuRenderPassEncoderEnd(render_pass);
+    var cmd = wgpuCommandEncoderFinish(encoder, null);
+    wgpuQueueSubmit(_queue, 1, &cmd);
 
-    // create command buffer
-    WGPUCommandBuffer cmd_buffer = wgpuCommandEncoderFinish(cmd_encoder, null); // after 'end render pass'
+    wgpuRenderPassEncoderRelease(pass);
+    wgpuCommandEncoderRelease(encoder);
+    wgpuCommandBufferRelease(cmd);
+    wgpuTextureViewRelease(backbufferView);
+  }
 
-    // submit commands    
-    wgpuQueueSubmit(queue, 1, &cmd_buffer);
-
-    // release all
-    wgpuRenderPassEncoderRelease(render_pass);
-    wgpuCommandEncoderRelease(cmd_encoder);
-    wgpuCommandBufferRelease(cmd_buffer);
-    wgpuTextureViewRelease(back_buffer);
+  private unsafe WGPUShaderModule CreateShaderModule(string wgsl, WGPUDevice device)
+  {
+    var wgslDesc = new WGPUShaderModuleWGSLDescriptor {
+      chain = new WGPUChainedStruct { sType = WGPUSType.ShaderModuleWGSLDescriptor },
+      source = wgsl.ToPointer()
+    };
+    var desc = new WGPUShaderModuleDescriptor { nextInChain = (WGPUChainedStruct*)&wgslDesc };
+    return wgpuDeviceCreateShaderModule(device, &desc);
   }
 }
