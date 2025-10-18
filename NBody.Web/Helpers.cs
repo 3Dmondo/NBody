@@ -1,4 +1,4 @@
-﻿namespace HelloTriangleWasm
+namespace NBody.Web
 {
     public unsafe static class Helpers
     {
