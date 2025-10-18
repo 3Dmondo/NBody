@@ -1,6 +1,6 @@
-namespace NBody
+namespace NBody.Simulation
 {
-  internal class Universe
+  public class Universe
   {
     public const double MassMultiplier = 1e-10;
     private const int trajectoryUpdateFrequency = 10;

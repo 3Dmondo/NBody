@@ -1,4 +1,4 @@
-namespace NBody
+namespace NBody.Simulation
 {
   public struct Vector //:
   //        IAdditionOperators<Vector, Vector, Vector>,

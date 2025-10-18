@@ -1,7 +1,7 @@
-namespace NBody
+namespace NBody.Simulation
 {
 
-  internal class Body
+  public class Body
   {
     public const int TrajectoryLength = 100;
 

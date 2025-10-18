@@ -1,4 +1,5 @@
 using NBody;
+using NBody.Simulation;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
@@ -19,9 +20,7 @@ var universe = new Universe(bodies);
 
 using var window = new Window(
   new GameWindowSettings {
-    IsMultiThreaded = false,
     UpdateFrequency = 0,
-    RenderFrequency = 0
   },
   nativeWindowSettings,
   universe); ;

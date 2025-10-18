@@ -1,6 +1,6 @@
-namespace NBody
+namespace NBody.Simulation
 {
-  internal class OcTree
+  public class OcTree
   {
     private readonly OcTreeCache ocTreeCache;
     private readonly OcTree[] subTrees = new OcTree[8];

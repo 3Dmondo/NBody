@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using NBody.Simulation;
 using NBody.Text;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;

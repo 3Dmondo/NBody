@@ -1,6 +1,6 @@
-namespace NBody
+namespace NBody.Simulation
 {
-  internal class OcTreeCache
+  public class OcTreeCache
   {
     private List<OcTree> OcTrees { get; } = new List<OcTree>();
     public IEnumerable<OcTree> ocTrees => OcTrees.Take(Count);

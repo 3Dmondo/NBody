@@ -1,6 +1,6 @@
-namespace NBody
+namespace NBody.Simulation
 {
-  internal class CircularBuffer<T>
+  public class CircularBuffer<T>
   {
     private readonly int Capacity;
     private readonly T[] Items;
